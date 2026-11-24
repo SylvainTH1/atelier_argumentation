@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<!--
+  COPYRIGHT ET CONDITIONS D'UTILISATION
+
+  © 2026 Sylvain Theulle. Tous droits réservés.
+
+  Ce logiciel est mis à disposition gratuitement.
+
+  Sont autorisés :
+  - Son utilisation personnelle, pédagogique ou professionnelle.
+  - Sa modification et son adaptation pour un usage privé ou interne.
+  - La redistribution de la version originale, sans modification,
+    à condition de conserver le nom de l'auteur et les
+    présentes conditions d'utilisation.
+
+  Sont interdits sans autorisation préalable de l'auteur :
+  - La redistribution de versions modifiées du logiciel.
+  - La suppression ou la modification des mentions d'attribution
+    dans les exemplaires redistribués.
+
+  Ces conditions s'appliquent sous réserve des exceptions
+  prévues par la législation applicable.
+-->
+
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atelier d'argumentation — voir la structure d'un raisonnement</title>
+<style>
+:root{
+  --ink:#1f2933; --muted:#5f6b7a; --line:#d5dbe3; --bg:#f4f6f9; --card:#ffffff; --input:#ffffff; --hover:#eef2f8;
+  --accent:#2b4c7e; --accent2:#2b4c7e; --on-accent:#fff; --focus:#8fb0e0; --on-rd:#fff;
+  --conn-bd:#333; --conn-bg:rgba(255,255,255,.8); --conn-ink:#111; --chip-bd:rgba(0,0,0,.12);
+  --tag-bg:#fff3b0; --tag-ink:#7a5b00; --need-bd:#dd6b20; --need-bg:#fff4e8; --frame-bg:#f4f7fb; --frame-bd:#7b8ba1;
+  --ok:#2b9a66; --ko:#d9363e;
+  --bg-conclusion:#fde9a9; --bd-conclusion:#b7791f; --bg-premisse:#cfe6fb; --bd-premisse:#1d6fb8;
+  --bg-objection:#fdd3d3; --bd-objection:#c53030; --bg-reponse:#d4efd9; --bd-reponse:#2f855a;
+  --bg-enonce:#f1f1f1; --bd-enonce:#8a94a3;
+}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
+main{padding:16px 22px 40px;max-width:1500px;margin:0 auto}
+.row{display:grid;gap:16px;margin-bottom:16px}
+.r2{grid-template-columns:minmax(300px,1fr) minmax(360px,1.25fr)}
+@media (max-width:1000px){.r2{grid-template-columns:1fr}}
+section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+section h2{margin:0 0 8px;font-size:15px;font-weight:650;color:var(--accent2)}
+section h2 small{font-weight:400;color:var(--muted);margin-left:6px}
+textarea{width:100%;min-height:290px;resize:vertical;font:15px/1.55 Georgia,"Times New Roman",serif;padding:10px 12px;border:1px solid var(--line);border-radius:8px;color:var(--ink);background:var(--input)}
+textarea:focus{outline:2px solid var(--focus);border-color:var(--focus)}
+button,select{font:inherit;font-size:13.5px}
+button{cursor:pointer;border:1px solid var(--line);background:var(--input);border-radius:6px;padding:4px 10px;color:var(--ink)}
+button:hover{background:var(--hover)}
+button.ghost{border-color:transparent;background:transparent;color:var(--muted);padding:2px 6px}
+button.ghost:hover{background:var(--hover);color:var(--ink)}
+select{border:1px solid var(--line);border-radius:6px;padding:3px 4px;background:var(--input);color:var(--ink);max-width:100%}
+.tools{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;margin-top:8px}
+.tools label{font-size:13.5px;color:var(--muted);display:flex;gap:5px;align-items:center}
+.hint{font-size:13px;color:var(--muted);margin:6px 0 0}
+
+header{background:var(--accent);color:var(--on-accent);padding:8px 22px;display:flex;flex-wrap:wrap;gap:6px 22px;align-items:center}
+header h1{margin:0;font-size:18px;font-weight:650}
+nav{display:flex;gap:4px}
+.tabbtn{background:transparent;border:1px solid rgba(255,255,255,.4);color:var(--on-accent);border-radius:6px;padding:4px 13px}
+.tabbtn:hover{background:rgba(255,255,255,.16)}
+.tabbtn.on{background:var(--on-accent);color:var(--accent);font-weight:650;border-color:var(--on-accent)}
+.steps{font-size:13px;opacity:.92}
+.tab[hidden]{display:none}
+
+.role-conclusion{--rb:var(--bg-conclusion);--rd:var(--bd-conclusion)}
+.role-premisse{--rb:var(--bg-premisse);--rd:var(--bd-premisse)}
+.role-objection{--rb:var(--bg-objection);--rd:var(--bd-objection)}
+.role-reponse{--rb:var(--bg-reponse);--rd:var(--bd-reponse)}
+.role-enonce{--rb:var(--bg-enonce);--rd:var(--bd-enonce)}
+
+/* texte structuré */
+#annot{font:16px/2.25 Georgia,"Times New Roman",serif;padding:6px 4px;min-height:200px;max-height:520px;overflow:auto}
+#annot2{font:18px/2.4 Georgia,"Times New Roman",serif;padding:6px 8px}
+.u{padding:3px 2px;border-radius:5px;-webkit-box-decoration-break:clone;box-decoration-break:clone;cursor:pointer;background:var(--rb,#f3f3f3)}
+.u.hl,.srow.hl,.node.hl rect.box{outline:2.5px solid var(--ink);outline-offset:1px}
+.u sup.n{font:700 10px/1 system-ui,sans-serif;color:var(--on-rd);background:var(--rd,#888);border-radius:9px;padding:2px 5px;margin-right:3px;vertical-align:super}
+.u.imp{font-style:italic;border:1.5px dashed var(--rd);padding:2px 5px}
+.c{border:1.6px solid var(--conn-bd);border-radius:5px;padding:0 3px;font-weight:700;background:var(--conn-bg);color:var(--conn-ink)}
+.legend{display:flex;flex-wrap:wrap;gap:5px 8px;margin:10px 0 0;font-size:12.5px;align-items:center}
+.legend .lab{color:var(--muted);margin-right:2px}
+.chip{padding:1px 7px;border-radius:10px;background:var(--rb);border:1px solid var(--chip-bd);color:var(--ink)}
+
+/* schéma */
+.node{cursor:pointer}
+.empty{color:var(--muted);font-style:italic;padding:14px}
+.mapbox{overflow:auto;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+.mapbox svg{display:block}
+.mapbox.fit svg{width:100%;height:auto}
+#map2.fit svg{max-width:none!important}
+#map{max-height:640px}
+
+/* structuration */
+#cards{max-height:640px;overflow:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px}
+.card{border:1px solid var(--line);border-left:6px solid var(--rd,#888);border-radius:8px;padding:7px 9px;background:var(--card)}
+.card.flash{animation:fl 1s}
+@keyframes fl{0%{background:var(--tag-bg)}100%{background:var(--card)}}
+.chead{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.chead b{min-width:1.8em}
+.chead.grp{margin-top:6px;padding-top:5px;border-top:1px dashed var(--line)}
+.tag{font-size:11.5px;background:var(--tag-bg);border-radius:8px;padding:0 6px;color:var(--tag-ink)}
+.ctext{font-size:13.5px;color:var(--ink);margin:4px 0}
+.lw{font-size:13px;color:var(--muted)}
+select.need{border-color:var(--need-bd);background:var(--need-bg)}
+
+/* découpage */
+#seg{max-height:520px;overflow:auto;padding-right:4px}
+.srow{display:flex;gap:8px;align-items:flex-start;border-radius:7px;padding:5px 8px;background:var(--rb,#f1f1f1);border-left:5px solid var(--rd,#888)}
+.srow.imp{border-style:dashed}
+.sn{font:700 11px/1 system-ui,sans-serif;color:var(--on-rd);background:var(--rd,#888);border-radius:9px;padding:3px 6px;margin-top:3px}
+.stext{font:15.5px/1.7 Georgia,"Times New Roman",serif;flex:1}
+.stext .cw{border:1.5px solid var(--conn-bd);border-radius:4px;padding:0 2px;font-weight:700;background:var(--conn-bg)}
+i.cut{display:inline-block;width:.42em;height:1.2em;vertical-align:text-bottom;cursor:col-resize;position:relative}
+i.cut:hover{background:var(--hover)}
+i.cut:hover::after{content:"✂";position:absolute;left:-.1em;top:-1.1em;font-size:13px;font-style:normal;color:var(--ink)}
+.sjoin{text-align:center;margin:1px 0}
+.sjoin button{font-size:12px;padding:0 9px;color:var(--muted);border-style:dashed}
+.impin{width:100%;border:1px solid var(--line);border-radius:5px;padding:4px 7px;font:15.5px Georgia,"Times New Roman",serif;background:var(--input);color:var(--ink)}
+.impin:focus{outline:2px solid var(--focus)}
+
+/* outils */
+.exp textarea{min-height:360px;font:12.5px/1.45 ui-monospace,Menlo,Consolas,monospace}
+.exp h3{font-size:14px;margin:0 0 6px}
+.palettes{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.pal{display:flex;flex-direction:column;align-items:flex-start;gap:5px;padding:7px 10px}
+.pal[aria-pressed=true],.modebtn[aria-pressed=true]{outline:2px solid var(--accent2);outline-offset:1px;font-weight:650}
+.pal{padding:6px;gap:6px;min-width:150px}
+.pv{display:block;width:100%;border:1px solid;border-radius:6px;overflow:hidden}
+.pv b{display:block;height:9px}
+.sw{display:flex;gap:4px;padding:7px 6px}
+.sw i{flex:1;height:26px;border-radius:5px;border:0 solid;border-bottom-width:5px}
+.lexgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px;margin-top:10px}
+.lexcat{border:1px solid var(--line);border-left:6px solid var(--rd);border-radius:8px;padding:8px 10px}
+.wchip.these{border-style:dashed}
+.lexcat h3{margin:0 0 6px;font-size:13.5px;font-weight:650}
+.lexcat h3 small{font-weight:400;color:var(--muted);display:block}
+.lexwords{display:flex;flex-wrap:wrap;gap:4px}
+.wchip{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:12px;background:var(--input);padding:0 2px 0 8px}
+.wchip input{border:none;background:transparent;color:var(--ink);font:inherit;font-size:13px;outline:none;min-width:2ch}
+.lexnew{border:1px solid var(--line);border-radius:6px;padding:3px 6px;background:var(--input);color:var(--ink);font:inherit;font-size:13px;flex:1;min-width:0}
+footer{color:var(--muted);font-size:13px;margin-top:10px;text-align:center}
+.hbtns{margin-left:auto;display:flex;gap:6px;align-items:center}
+.ibtn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:30px;padding:0;background:transparent;border:1px solid rgba(255,255,255,.4);color:var(--on-accent);border-radius:6px}
+.ibtn:hover{background:rgba(255,255,255,.16)}
+.hmsg{font-size:12.5px;opacity:.95;max-width:42ch}
+
+/* comparaison et correction */
+.cmp-verdict{margin:10px 0;padding:8px 12px;border-radius:8px;border:2px solid var(--line);background:var(--input);color:var(--muted)}
+.cmp-verdict.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,var(--card));color:var(--ink)}
+.cmp-verdict.ko{border-color:var(--ko);background:color-mix(in srgb,var(--ko) 12%,var(--card));color:var(--ink)}
+.cmp-verdict b{font-size:15px}
+.cmp-verdict .det{font-size:13px;margin-top:3px}
+.cmp-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:900px){.cmp-grid{grid-template-columns:1fr}}
+.cmp-pane{border:4px solid var(--line);border-radius:12px;padding:8px 10px;min-width:0}
+.cmp-pane.ok{border-color:var(--ok)}
+.cmp-pane.ko{border-color:var(--ko)}
+.cmp-pane h3{margin:0 0 6px;font-size:14px}
+.cmp-pane h3 small{font-weight:400;color:var(--muted)}
+.cmp-pane .mapbox{max-height:560px}
+
+/* feuille d'impression (export PDF) */
+#print-sheet{display:none}
+@page{size:A4;margin:14mm}
+@page map{size:A4 landscape;margin:10mm}
+@media print{
+  html,body{background:#fff!important}
+  header,main{display:none!important}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #print-sheet{display:block;background:#fff;color:var(--ink);font:11pt/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  #print-sheet h1{font-size:17pt;margin:0 0 1mm;color:var(--accent)}
+  #print-sheet h2{font-size:13pt;margin:0 0 4mm;color:var(--accent)}
+  #print-sheet .pdate{margin:0 0 6mm;color:var(--muted);font-size:10pt}
+  #print-sheet .pt{font:11.5pt/2.2 Georgia,"Times New Roman",serif}
+  #print-sheet .legend{margin-top:7mm;font-size:9.5pt;break-inside:avoid}
+  #print-sheet .u{cursor:auto}
+  #print-sheet .pmap{break-before:page;page:map}
+  #print-sheet .pmap svg{width:100%;height:150mm;max-width:none!important;display:block}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Atelier d'argumentation</h1>
+  <nav id="tabs">
+    <button class="tabbtn on" data-tab="main" aria-selected="true">Page principale</button>
+    <button class="tabbtn" data-tab="viz" aria-selected="false">Visualisation</button>
+    <button class="tabbtn" data-tab="tools" aria-selected="false">Outils</button>
+  </nav>
+  <span class="steps">Saisir le texte (section 1) → découper et structurer (sections 2 et 3) → visualiser (sections 4 et 5)</span>
+  <span class="hbtns">
+    <span class="hmsg" id="work-msg" aria-live="polite"></span>
+    <button class="ibtn" id="work-open" title="Ouvrir un travail enregistré (.json)" aria-label="Ouvrir un travail enregistré"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></button>
+    <button class="ibtn" id="work-save" title="Enregistrer le travail dans un fichier (.json)" aria-label="Enregistrer le travail"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h11l4 4v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M8 3v5h7V3"/><path d="M8 21v-7h8v7"/></svg></button>
+    <input type="file" id="work-file" accept=".json,application/json" hidden>
+  </span>
+</header>
+<main>
+
+<div class="tab" id="tab-main">
+<div class="row r2">
+  <section>
+    <h2>1. Le texte <small>à rédiger ou charger un exemple</small></h2>
+    <textarea id="src" spellcheck="false" placeholder="Écrivez ici un court argument, ou collez un texte philosophique (quelques paragraphes)…"></textarea>
+    <div class="tools">
+      <button id="ex1">Exemple : Cicéron</button>
+      <button id="ex2">Exemple : Leibniz</button>
+      <button id="ex3">Exemple : Clifford</button>
+      <button id="clr">Vider</button>
+    </div>
+  </section>
+  <section>
+    <h2>2. Découper les énoncés <small>couper, fusionner, ou ajouter une prémisse implicite</small></h2>
+    <p class="hint" style="margin:0 0 8px">Cliquez entre deux mots pour couper un énoncé en deux ; « fusionner » réunit un énoncé avec le suivant ; « ＋ prémisse implicite » ajoute un énoncé sous-entendu.</p>
+    <div class="tools" style="margin:0 0 8px">
+      <label><input type="checkbox" id="fine" checked> découpage automatique aux mots de liaison (« car », « mais »…)</label>
+      <button id="seg-reset">Rétablir le découpage automatique</button>
+    </div>
+    <div id="seg"></div>
+  </section>
+</div>
+
+<div class="row r2">
+  <section>
+    <h2>3. Structurer l'argumentation <small>statut des énoncés, et liens logiques entre eux</small></h2>
+    <p class="hint" style="margin:0 0 8px">Une prémisse soutient un autre énoncé, une objection s'y oppose, une réponse répond à une objection. La conclusion ne renvoie à rien. Un énoncé « hors argument » n'a pas de lien logique : il n'apporte rien à l'argumentation, ou n'est pas encore classé. Les prémisses peuvent être liées entre elles. Le bouton ↺ revient au repérage automatique.</p>
+    <div id="cards"></div>
+  </section>
+  <section>
+    <h2>4. Le texte structuré <small>le numéro de chaque énoncé est repris sur le schéma ; survolez-en un pour le repérer</small></h2>
+    <div id="annot"></div>
+    <div class="legend" id="legend-roles"></div>
+    <div class="tools"><button data-pdf>Exporter le texte en PDF</button><span class="hint" style="margin:0">s'ouvre dans la fenêtre d'impression : choisir « Enregistrer au format PDF »</span></div>
+  </section>
+</div>
+
+<div class="row">
+  <section>
+    <h2>5. Le schéma en arbre de l'argumentation <small>les énoncés sont placés sous ce qu'ils soutiennent ou critiquent</small></h2>
+    <div id="map" class="mapbox"></div>
+    <div class="legend" id="maplegend"></div>
+    <div class="tools">
+      <button data-svg>Télécharger le schéma (.svg)</button>
+      <button data-png>Télécharger le schéma (.png)</button>
+      <label><input type="checkbox" data-fit="map" checked> ajuster à la largeur</label>
+    </div>
+  </section>
+</div>
+</div>
+
+<div class="tab" id="tab-viz" hidden>
+  <div class="row">
+    <section>
+      <h2>Le texte structuré</h2>
+      <div id="annot2"></div>
+      <div class="legend" id="legend-roles2"></div>
+      <div class="tools">
+        <button data-pdf>Exporter en PDF</button>
+        <label><input type="checkbox" id="pdf-map" checked> avec le schéma (page suivante)</label>
+        <span class="hint" style="margin:0">s'ouvre dans la fenêtre d'impression : choisir « Enregistrer au format PDF »</span>
+      </div>
+    </section>
+  </div>
+  <div class="row">
+    <section>
+      <h2>Le schéma en arbre de l'argumentation</h2>
+      <div id="map2" class="mapbox"></div>
+      <div class="legend" id="maplegend2"></div>
+      <div class="tools">
+        <button data-svg>Télécharger le schéma (.svg)</button>
+        <button data-png>Télécharger le schéma (.png)</button>
+        <label><input type="checkbox" data-fit="map2" checked> ajuster à la largeur</label>
+      </div>
+    </section>
+  </div>
+  <div class="row">
+    <section id="cmp">
+      <h2>Comparaison et correction <small>compare la structure de l'argument, pas le contenu des phrases</small></h2>
+      <div class="tools" style="margin-top:0">
+        <button id="cmp-open">Charger un travail à comparer (.json)…</button>
+        <input type="file" id="cmp-file" accept=".json,application/json" hidden>
+        <button id="cmp-clear" hidden>Retirer la comparaison</button>
+        <label><input type="checkbox" id="cmp-hint"> repérer les parties sans équivalent</label>
+        <label><input type="checkbox" id="cmp-fit" checked> ajuster à la largeur</label>
+        <span class="hint" id="cmp-msg" style="margin:0"></span>
+      </div>
+      <div class="cmp-verdict" id="cmp-verdict"></div>
+      <div class="cmp-grid">
+        <div class="cmp-pane" id="cmp-left"><h3>Schéma de comparaison <small id="cmp-name"></small></h3><div class="mapbox fit" id="cmp-map-l"></div></div>
+        <div class="cmp-pane" id="cmp-right"><h3>Schéma actuel</h3><div class="mapbox fit" id="cmp-map-r"></div></div>
+      </div>
+      <div class="legend" id="cmp-legend"></div>
+    </section>
+  </div>
+</div>
+
+<div class="tab" id="tab-tools" hidden>
+  <div class="row">
+    <section>
+      <h2>Apparence <small>mode clair ou sombre, et palette de couleurs</small></h2>
+      <div class="tools" style="margin-top:0" id="modes">
+        <span class="lw">Mode :</span>
+        <button class="modebtn" data-mode="clair" aria-pressed="false">Clair</button>
+        <button class="modebtn" data-mode="sombre" aria-pressed="false">Sombre</button>
+        <button class="modebtn" data-mode="auto" aria-pressed="false">Selon le système</button>
+      </div>
+      <div class="palettes" id="palettes"></div>
+    </section>
+  </div>
+  <div class="row">
+    <section>
+      <h2>Mots de liaison <small>un type par statut d'énoncé</small></h2>
+      <p class="hint" style="margin:0 0 8px">Les mots de liaison sont regroupés comme les statuts d'énoncé : un mot de la catégorie « Objection », par exemple, ouvre un énoncé de statut objection. Un énoncé sans mot de liaison reconnu reste « hors argument » tant qu'on ne le relie pas. Modifiez un mot en cliquant dessus, supprimez-le avec ×, ajoutez-en dans la catégorie voulue. Le repérage est recalculé aussitôt. Le texte déjà structuré à la main peut perdre ses réglages si le découpage change.</p>
+      <div class="tools" style="margin:0 0 4px"><button id="lex-reset">Réinitialiser les mots de liaison</button><span class="hint" id="lex-msg" style="margin:0"></span></div>
+      <div class="lexgrid" id="lex"></div>
+    </section>
+  </div>
+  <div class="row">
+    <section class="exp">
+      <h2>Exporter la structure <small>reflète l'état actuel des sections 2 et 3</small></h2>
+      <div class="row r2" style="margin:0">
+        <div>
+          <h3>Argdown</h3>
+          <textarea id="out-ad" readonly spellcheck="false"></textarea>
+          <div class="tools"><button data-copy="out-ad">Copier</button><button data-dl="out-ad" data-name="argument.ad">Télécharger .ad</button></div>
+        </div>
+        <div>
+          <h3>Graphviz (DOT)</h3>
+          <textarea id="out-dot" readonly spellcheck="false"></textarea>
+          <div class="tools"><button data-copy="out-dot">Copier</button><button data-dl="out-dot" data-name="argument.dot">Télécharger .dot</button></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<footer>
+  © 2026 Sylvain Theulle — Tous droits réservés. Modifications pour usage personnel autorisées. Redistribution de versions modifiées interdite sans autorisation.
+</footer>
+</main>
+<div id="print-sheet" aria-hidden="true"></div>
+
+<script>
+(function(root){
+'use strict';
+
+/* ================= Données ================= */
+const FINE_LEX={
+  conclusion:["par conséquent","c'est pourquoi","en conséquence","il s'ensuit que","il en résulte que","on peut en conclure que","on en conclut que","en conclusion","de ce fait","par suite","d'où","dès lors","en définitive","donc","ainsi"],
+  these:["je soutiens que","je soutiendrai que","je pense que","je crois que","selon moi","à mon avis","nous défendrons","il ne faut pas","il faut","on doit","nous devons"],
+  justification:["en effet","étant donné que","dans la mesure où","vu que","du fait que","parce que","puisque","car","or"],
+  addition:["de plus","en outre","par ailleurs","de surcroît","ensuite","de même","ainsi que","d'ailleurs"],
+  exemple:["par exemple","notamment","prenons le cas","c'est le cas","en témoigne","comme le montre","comme l'illustre"],
+  concession:["il est vrai que","bien que","quoique","même si","sans doute","certes"],
+  objection:["on pourrait objecter que","on pourrait objecter","on peut objecter que","on objectera que","on objectera","d'aucuns diront","certains diront que","certains diront","on dira que","on pourrait penser que","on pourrait croire que","on pourrait dire que"],
+  opposition:["en revanche","au contraire","à l'inverse","inversement","alors que","tandis que"],
+  reponse:["mais","cependant","pourtant","toutefois","néanmoins"]
+};
+/* mots des anciennes versions, qui ne lancent plus aucun statut */
+const DROPPED=new Set(["c'est-à-dire","autrement dit","en d'autres termes","à supposer que","à condition que","supposons que","dans le cas où","à moins que","sauf si","si"]);
+/* Quatre catégories de mots de liaison (le statut « hors argument » n'a pas de mot de liaison).
+   Chaque mot par défaut garde en interne son comportement fin ; un mot ajouté se comporte comme le mot type de sa catégorie. */
+const STATUS_MAIN={conclusion:'conclusion',premisse:'justification',objection:'opposition',reponse:'reponse'};
+const FINE_TO_STATUS={conclusion:'conclusion',these:'conclusion',justification:'premisse',addition:'premisse',exemple:'premisse',concession:'objection',objection:'objection',opposition:'objection',reponse:'reponse'};
+const DEFAULT_LEX={conclusion:[],premisse:[],objection:[],reponse:[]};
+const SUB=new Map();
+for(const f in FINE_LEX)for(const w of FINE_LEX[f]){DEFAULT_LEX[FINE_TO_STATUS[f]].push(w);SUB.set(w,f);}
+/* Les cinq statuts d'un énoncé. Le statut détermine seul la nature du lien. */
+const ROLES={
+  conclusion:{label:'Conclusion',bg:'#fde9a9',bd:'#b7791f'},
+  premisse:{label:'Prémisse',bg:'#cfe6fb',bd:'#1d6fb8'},
+  objection:{label:'Objection',bg:'#fdd3d3',bd:'#c53030'},
+  reponse:{label:'Réponse',bg:'#d4efd9',bd:'#2f855a'},
+  enonce:{label:'Hors argument',bg:'#f1f1f1',bd:'#8a94a3'}
+};
+const STATUS_EDGE={premisse:'soutient',objection:'attaque',reponse:'repond'};
+const EDGE_STATUS={soutient:'premisse',attaque:'objection',repond:'reponse'};
+const LINK_WORD={premisse:'de',objection:'à',reponse:'à'};
+const ETYPES={
+  soutient:{label:'soutient',color:'#1d6fb8',dash:'',marker:'mk-s'},
+  attaque:{label:"s'oppose à",color:'#c53030',dash:'',marker:'mk-a'},
+  repond:{label:'répond à',color:'#2f855a',dash:'6 4',marker:'mk-r'}
+};
+/* anciens statuts de travaux enregistrés */
+const MIG_STATUS={concession:'objection',illustration:'premisse'};
+function migOver(arr){
+  return (Array.isArray(arr)?arr:[]).map(([k,o])=>{o=o||{};if(o.status&&MIG_STATUS[o.status])o.status=MIG_STATUS[o.status];if(o.status&&!ROLES[o.status])delete o.status;return [k,o];});
+}
+const ALWAYS=new Set(['car','puisque','parce que','mais','alors que','tandis que']);
+const COND=new Set(['donc','or','ainsi','cependant','pourtant','toutefois','néanmoins','en effet','par conséquent',"c'est pourquoi",'en conséquence',"d'ailleurs",'en revanche','de plus','en outre','par ailleurs',"d'où",'dès lors','au contraire','certes']);
+const RESTRICT=new Set(['or','si','ainsi']);
+
+/* ================= Outils de texte ================= */
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const norm=s=>s.toLowerCase().replace(/’/g,"'").replace(/\s+/g,' ').trim();
+const wc=s=>{const t=s.replace(/[^\p{L}\p{N}']+/gu,' ').trim();return t?t.split(' ').length:0;};
+const cap=s=>s?s.charAt(0).toUpperCase()+s.slice(1):s;
+function patt(w){return w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/'/g,"['’]").replace(/ /g,'\\s+');}
+function buildRe(list){
+  const sorted=list.slice().sort((a,b)=>b.length-a.length);
+  return '(?<![\\p{L}\\p{N}_])(?:'+sorted.map(patt).join('|')+')(?![\\p{L}\\p{N}_])';
+}
+const DEFAULT_KEYS=new Set(Object.values(DEFAULT_LEX).flat());
+const cloneLex=l=>{const o={};for(const k in l)o[k]=l[k].slice();return o;};
+const normWord=w=>w.toLowerCase().replace(/’/g,"'").replace(/\s+/g,' ').trim();
+let LEXICON,CAT_OF,CONN_SRC;
+function setLexicon(lex){
+  LEXICON=lex;const entries=[];
+  for(const cat in lex)for(const w of lex[cat]){const f=SUB.get(w);entries.push({w,cat:(f&&FINE_TO_STATUS[f]===cat)?f:STATUS_MAIN[cat]});}
+  CAT_OF=new Map(entries.map(e=>[e.w,e.cat]));
+  CONN_SRC=entries.length?buildRe(entries.map(e=>e.w)):null;
+}
+setLexicon(cloneLex(DEFAULT_LEX));
+/* un mot ajouté par l'utilisateur coupe l'énoncé (après une virgule) selon sa catégorie */
+const isCond=(key,cat)=>COND.has(key)||(!DEFAULT_KEYS.has(key)&&['conclusion','justification','opposition','reponse'].includes(cat));
+
+function findConnectors(str){
+  const out=[];if(!CONN_SRC)return out;const re=new RegExp(CONN_SRC,'giu');let m;
+  while((m=re.exec(str))){
+    const key=norm(m[0]);const cat=CAT_OF.get(key);if(!cat)continue;
+    if(RESTRICT.has(key)){let k=m.index-1;while(k>=0&&/\s/.test(str[k]))k--;if(k>=0&&!/[,;:(—–"«]/.test(str[k]))continue;}
+    out.push({start:m.index,end:m.index+m[0].length,cat,key,word:m[0]});
+  }
+  return out;
+}
+/* ================= Découpage en énoncés ================= */
+function findCuts(sent){
+  const cand=[];
+  const cm=/^(bien que|quoique|même si)(?![\p{L}])/iu.exec(sent);
+  if(cm){
+    const re=/,/g;let c;
+    while((c=re.exec(sent))){
+      if(wc(sent.slice(0,c.index))>=3&&wc(sent.slice(c.index+1))>=3){
+        let at=c.index+1;while(at<sent.length&&/\s/.test(sent[at]))at++;
+        cand.push({at,end:at,endPrev:c.index,concessive:true});break;
+      }
+    }
+  }
+  for(const m of findConnectors(sent)){
+    if(m.start===0)continue;
+    const always=ALWAYS.has(m.key),cond=isCond(m.key,m.cat);
+    if(!always&&!cond)continue;
+    let c=m.start;while(c>0&&/\s/.test(sent[c-1]))c--;
+    const comma=c>0&&sent[c-1]===',';
+    if(cond&&!always&&!comma)continue;
+    if(comma)c--;
+    while(c>0&&/\s/.test(sent[c-1]))c--;
+    cand.push({at:m.start,end:m.end,endPrev:c});
+  }
+  cand.sort((a,b)=>a.at-b.at);
+  const res=[];let last=0;
+  for(let k=0;k<cand.length;k++){
+    const nextAt=k+1<cand.length?cand[k+1].at:sent.length;
+    if(wc(sent.slice(last,cand[k].endPrev))<2)continue;
+    if(!cand[k].concessive&&wc(sent.slice(cand[k].end,nextAt))<3)continue;
+    res.push(cand[k]);last=cand[k].at;
+  }
+  return res;
+}
+function segment(text,fine){
+  const units=[];
+  const sentRe=/[^.!?…;\n]+(?:[.!?…]+["»”')\]]*|;|(?=\n)|$)/g;let m;
+  while((m=sentRe.exec(text))){
+    let s=m.index,e=s+m[0].length;
+    while(s<e&&/\s/.test(text[s]))s++;while(e>s&&/\s/.test(text[e-1]))e--;
+    if(!/[\p{L}\p{N}]/u.test(text.slice(s,e)))continue;
+    const sent=text.slice(s,e);const cuts=fine?findCuts(sent):[];
+    const pBreak=units.length>0&&/\n/.test(text.slice(units[units.length-1].end,s));
+    let start=0;
+    const push=(a,b,flag)=>{units.push({start:s+a,end:s+b,text:sent.slice(a,b),pBreak:units.length&&a===0?pBreak:false,concessionOfNext:!!flag});};
+    for(const c of cuts){push(start,c.endPrev,c.concessive);start=c.at;}
+    push(start,sent.length,false);
+  }
+  return units;
+}
+
+/* ---- corrections manuelles du découpage : une frontière est repérée par le texte qui l'entoure ---- */
+function sig(text,p){return norm(text.slice(Math.max(0,p-24),p))+'¦'+norm(text.slice(p,p+24));}
+function applySeg(text,units,seg){
+  if(!seg)return units;
+  const J=new Set(seg.joins||[]),C=new Set(seg.cuts||[]);
+  if(J.size){
+    const out=[];
+    for(const u of units){
+      const prev=out[out.length-1];
+      if(prev&&J.has(sig(text,u.start)))
+        out[out.length-1]={start:prev.start,end:u.end,text:text.slice(prev.start,u.end),pBreak:prev.pBreak,concessionOfNext:u.concessionOfNext};
+      else out.push(u);
+    }
+    units=out;
+  }
+  if(C.size){
+    const out=[];
+    for(const u of units){
+      const pts=[],re=/\S+/g;let m;
+      while((m=re.exec(u.text))){if(m.index===0)continue;const p=u.start+m.index;if(C.has(sig(text,p)))pts.push(p);}
+      if(!pts.length){out.push(u);continue;}
+      let s=u.start;
+      pts.forEach((p,k)=>{
+        let e=p;while(e>s&&/[\s,]/.test(text[e-1]))e--;
+        out.push({start:s,end:e,text:text.slice(s,e),pBreak:k===0?u.pBreak:false,concessionOfNext:false});s=p;
+      });
+      out.push({start:s,end:u.end,text:text.slice(s,u.end),pBreak:false,concessionOfNext:u.concessionOfNext});
+    }
+    units=out;
+  }
+  return units;
+}
+
+/* ================= Analyse ================= */
+function analyseUnit(u){
+  u.conns=findConnectors(u.text);
+  const pre=m=>wc(u.text.slice(0,m.start));
+  const lead=u.conns.find(m=>pre(m)<=1);
+  u.lead=lead||null;
+  let cat=null;
+  if(lead)cat=lead.cat;
+  if((!cat||cat==='these')&&u.conns.some(m=>m.cat==='conclusion'))cat='conclusion';
+  u.cat=cat;
+  let core=u.text;
+  if(lead&&lead.start<=2&&['conclusion','justification','opposition','reponse','concession','objection','exemple','addition'].includes(lead.cat)){
+    const c=u.text.slice(lead.end).replace(/^[\s,:;]+/,'');
+    if(c.length>1)core=c;
+  }
+  u.core=cap(core.replace(/^qu['’]/i,''));
+}
+/* Inférence automatique : au plus UN lien sortant par énoncé ; sa nature est fixée par le statut. */
+function inferEdges(units){
+  const n=units.length;units.forEach(u=>u.edges=[]);
+  const incSupport=i=>units.some(u=>u.edges.some(e=>e.to===i&&e.type==='soutient'));
+  /* l'énoncé défendu le plus proche : une conclusion, ou un énoncé déjà soutenu */
+  const claimBefore=i=>{for(let j=i-1;j>=0;j--)if(units[j].cat==='conclusion'||units[j].cat==='these'||incSupport(j))return j;return i>0?i-1:-1;};
+  for(let i=0;i<n;i++){
+    const u=units[i];
+    switch(u.cat){
+      case 'justification':
+      case 'exemple':
+        if(i>0)u.edges.push({to:i-1,type:'soutient'});break;
+      case 'conclusion':{
+        let found=0;
+        for(let j=i-1;j>=Math.max(0,i-4)&&found<2;j--){
+          const v=units[j];
+          if(['objection','concession','exemple'].includes(v.cat))continue;
+          if(!v.edges.length){v.edges.push({to:i,type:'soutient'});found++;}
+          if(v.cat==='conclusion')break;
+        }
+        break;}
+      case 'opposition':
+        if(i>0)u.edges.push({to:i-1,type:'attaque'});break;
+      case 'reponse':{
+        /* répond à l'objection qui précède ; à défaut, s'oppose simplement à l'énoncé précédent */
+        if(i>0){const p=units[i-1].edges[0];u.edges.push({to:i-1,type:(p&&p.type==='attaque')?'repond':'attaque'});}
+        break;}
+      case 'concession':{
+        const t=claimBefore(i);if(t>=0)u.edges.push({to:t,type:'attaque'});break;}
+      case 'objection':{
+        let t=-1;
+        for(let j=i-1;j>=0;j--)if(units[j].cat==='conclusion'||units[j].cat==='these'){t=j;break;}
+        if(t<0)for(let j=i-1;j>=0;j--)if(incSupport(j)){t=j;break;}
+        if(t<0&&i>0)t=i-1;
+        if(t>=0)u.edges.push({to:t,type:'attaque'});
+        break;}
+      case 'addition':{
+        const p=i>0?units[i-1].edges[0]:null;
+        if(p&&p.type==='soutient')u.edges.push({to:p.to,type:'soutient'});
+        break;}
+    }
+  }
+}
+function analyse(text,opts){
+  opts=opts||{};const over=opts.over||new Map(),implicit=opts.implicit||[];
+  const tu=applySeg(text,segment(text,opts.fine!==false),opts.seg);
+  tu.forEach(analyseUnit);
+  inferEdges(tu);
+  const incAny=new Array(tu.length).fill(false);
+  tu.forEach(u=>u.edges.forEach(e=>{incAny[e.to]=true;}));
+  tu.forEach((u,i)=>{
+    u.key=norm(u.text);
+    u.autoTargetUnit=u.edges.length?tu[u.edges[0].to]:null;
+    u.autoStatus=u.edges.length?EDGE_STATUS[u.edges[0].type]:((u.cat==='conclusion'||u.cat==='these'||incAny[i])?'conclusion':'enonce');
+  });
+  /* prémisses sous-entendues : insérées après l'énoncé désigné par leur ancre */
+  const out=[],used=new Set();
+  const mk=im=>({implicit:true,id:im.id,start:-1,end:-1,text:im.text,core:im.text.trim()||'(prémisse sous-entendue : à formuler)',pBreak:false,conns:[],cat:null,key:'§'+im.id,edges:[],autoStatus:'premisse',autoTargetUnit:null});
+  const place=ak=>{for(const im of implicit){if(used.has(im.id)||im.after!==ak)continue;used.add(im.id);const u=mk(im);out.push(u);place(u.key);}};
+  tu.forEach(u=>{out.push(u);place(u.key);});
+  implicit.forEach(im=>{if(!used.has(im.id)){used.add(im.id);const u=mk(im);out.push(u);place(u.key);}});
+  const idx=new Map(out.map((u,i)=>[u,i])),byKey=new Map();
+  out.forEach((u,i)=>{if(!byKey.has(u.key))byKey.set(u.key,i);});
+  out.forEach((u,i)=>{
+    const ov=over.get(u.key)||{};
+    u.manual=ov.status!==undefined||ov.target!==undefined||ov.group!==undefined;
+    u.status=ov.status!==undefined?ov.status:u.autoStatus;
+    let t=ov.target!==undefined?(byKey.has(ov.target)?byKey.get(ov.target):-1):(u.autoTargetUnit?idx.get(u.autoTargetUnit):-1);
+    if(!STATUS_EDGE[u.status]||t===i)t=-1;
+    u.target=t;
+    u.edges=t>=0?[{to:t,type:STATUS_EDGE[u.status]}]:[];
+    u.inc=[];
+  });
+  out.forEach((u,i)=>u.edges.forEach(e=>out[e.to].inc.push({from:i,type:e.type})));
+  /* prémisses liées : des prémisses du même énoncé visé qui n'ont de force qu'ensemble */
+  out.forEach(u=>{u.group=null;u.gmembers=null;});
+  const gm=new Map();
+  out.forEach((u,i)=>{const g=(over.get(u.key)||{}).group;if(g&&u.status==='premisse'&&u.target>=0){if(!gm.has(g))gm.set(g,[]);gm.get(g).push(i);}});
+  for(const [g,list] of gm){const t=out[list[0]].target;const mem=list.filter(i=>out[i].target===t);if(mem.length>=2)mem.forEach(i=>{out[i].group=g;out[i].gmembers=mem;});}
+  out.forEach(u=>{
+    if(u.status==='enonce'&&u.inc.length&&!(over.get(u.key)||{}).status)u.status='conclusion';
+    u.role=u.status;
+  });
+  return out;
+}
+
+/* ================= Schéma en arbre (mise en page + SVG) ================= */
+const NW=236,GAPX=34,GAPY=88,PAD=26,LH=16,CPL=31,MAXL=5;
+function wrap(str,max,maxLines){
+  const words=str.split(/\s+/);const lines=[];let cur='';
+  for(const w of words){
+    if((cur+' '+w).trim().length>max&&cur){lines.push(cur);cur=w;}else cur=(cur+' '+w).trim();
+  }
+  if(cur)lines.push(cur);
+  if(lines.length>maxLines){lines.length=maxLines;lines[maxLines-1]=lines[maxLines-1].replace(/.{0,3}$/,'')+'…';}
+  return lines;
+}
+function layout(units){
+  const n=units.length;
+  const inc=Array.from({length:n},()=>[]),conn=new Array(n).fill(false),outc=new Array(n).fill(0);
+  units.forEach((u,i)=>u.edges.forEach(e=>{inc[e.to].push(i);conn[i]=conn[e.to]=true;outc[i]++;}));
+  const depth=new Array(n).fill(-1);let q=[];
+  const bfs=()=>{while(q.length){const x=q.shift();for(const s of inc[x])if(depth[s]<0){depth[s]=depth[x]+1;q.push(s);}}};
+  for(let i=0;i<n;i++)if(conn[i]&&!outc[i]){depth[i]=0;q.push(i);}
+  bfs();
+  for(let i=0;i<n;i++)if(conn[i]&&depth[i]<0){depth[i]=0;q.push(i);bfs();}
+  const maxD=Math.max(-1,...depth);const isoDepth=maxD+1;
+  const iso=[];for(let i=0;i<n;i++)if(!conn[i]){depth[i]=isoDepth;iso.push(i);}
+  const nodes=units.map((u,i)=>{const lines=wrap(u.core,CPL,MAXL);return {i,lines,w:NW,h:16+lines.length*LH,x:0,y:0,d:depth[i],g:units[i].group||null};});
+  const gmin={};nodes.forEach(nd=>{if(nd.g)gmin[nd.g]=Math.min(gmin[nd.g]===undefined?1e9:gmin[nd.g],nd.i);});
+  nodes.forEach(nd=>{nd.gk=nd.g?gmin[nd.g]:nd.i;});
+  const layers=[];nodes.forEach(nd=>{(layers[nd.d]=layers[nd.d]||[]).push(nd);});
+  let y=PAD+8;
+  layers.forEach((L,d)=>{
+    if(!L)return;
+    if(d>0&&!(iso.length&&d===isoDepth)){
+      L.forEach(nd=>{
+        const ts=units[nd.i].edges.map(e=>nodes[e.to]).filter(t=>t.d<nd.d&&t.placed);
+        nd.des=ts.length?ts.reduce((a,t)=>a+t.x,0)/ts.length:Infinity;
+      });
+      L.sort((a,b)=>(a.des===b.des?(a.gk-b.gk||a.i-b.i):a.des-b.des));
+    }else L.sort((a,b)=>a.i-b.i);
+    const finite=L.filter(nd=>isFinite(nd.des||Infinity));
+    let cursor=-Infinity;
+    L.forEach((nd,k)=>{
+      const extra=(k&&(L[k-1].g||nd.g)&&L[k-1].g!==nd.g)?18:0;
+      const want=(d>0&&isFinite(nd.des))?nd.des:(k?cursor+NW+GAPX+extra:0);
+      nd.x=Math.max(want,cursor+NW+GAPX+extra);cursor=nd.x;
+    });
+    if(finite.length&&d>0){
+      const shift=finite.reduce((a,nd)=>a+(nd.des-nd.x),0)/finite.length;
+      const minShift=-Infinity;L.forEach(nd=>nd.x+=shift);
+    }
+    const hmax=Math.max(...L.map(nd=>nd.h));
+    L.forEach(nd=>{nd.y=y;nd.placed=true;});
+    y+=hmax+GAPY;
+  });
+  /* recentrage : chaque énoncé est centré au-dessus de ses prémisses (balayages successifs) */
+  const kids=Array.from({length:n},()=>[]);
+  units.forEach((u,i)=>u.edges.forEach(e=>{if(nodes[i].d>nodes[e.to].d)kids[e.to].push(i);}));
+  const real=layers.map((Ly,d)=>(Ly&&!(iso.length&&d===isoDepth))?Ly:null);
+  const clusters=Ly=>{const o=[];Ly.forEach(nd=>{const last=o[o.length-1];if(last&&nd.g&&last[0].g===nd.g)last.push(nd);else o.push([nd]);});return o;};
+  const gapB=(a,b)=>GAPX+((a[0].g||b[0].g)&&a[0].g!==b[0].g?18:0);
+  const cwid=c=>c.length*NW+(c.length-1)*GAPX;
+  const mean=a=>a.reduce((s,x)=>s+x,0)/a.length;
+  const relayer=(Ly,want)=>{
+    const cs=clusters(Ly);
+    const des=cs.map(c=>{const v=want(c);return v===null?mean(c.map(nd=>nd.x)):v;});
+    const p1=[],p2=[];
+    cs.forEach((c,k)=>{p1[k]=k?Math.max(des[k],p1[k-1]+cwid(cs[k-1])/2+gapB(cs[k-1],c)+cwid(c)/2):des[k];});
+    for(let k=cs.length-1;k>=0;k--)p2[k]=k<cs.length-1?Math.min(des[k],p2[k+1]-cwid(cs[k+1])/2-gapB(cs[k],cs[k+1])-cwid(cs[k])/2):des[k];
+    cs.forEach((c,k)=>{let x=(p1[k]+p2[k])/2-cwid(c)/2+NW/2;c.forEach(nd=>{nd.x=x;x+=NW+GAPX;});});
+  };
+  const downWant=c=>{const ts=c.flatMap(nd=>units[nd.i].edges.map(e=>nodes[e.to]).filter(t=>t.d<nd.d));return ts.length?mean(ts.map(t=>t.x)):null;};
+  const upWant=c=>{const ks=c.flatMap(nd=>kids[nd.i]);return ks.length?mean(ks.map(k=>nodes[k].x)):null;};
+  for(let it=0;it<6;it++){
+    for(let d=1;d<real.length;d++)if(real[d])relayer(real[d],downWant);
+    for(let d=real.length-2;d>=0;d--)if(real[d])relayer(real[d],upWant);
+  }
+  let minX=Infinity,maxX=-Infinity;nodes.forEach(nd=>{minX=Math.min(minX,nd.x-NW/2);maxX=Math.max(maxX,nd.x+NW/2);});
+  nodes.forEach(nd=>nd.x+=PAD-minX);
+  return {nodes,width:Math.max(300,maxX-minX+2*PAD),height:y-GAPY+PAD+6,isoDepth:iso.length?isoDepth:-1};
+}
+function mapSVG(units,flags){
+  if(!units.length)return '';
+  const L=layout(units);const {nodes}=L;
+  let s=`<svg xmlns="http://www.w3.org/2000/svg" width="${L.width}" height="${L.height}" viewBox="0 0 ${L.width} ${L.height}" style="max-width:${L.width}px" font-family="system-ui,-apple-system,Segoe UI,Roboto,sans-serif">`;
+  const mk=(id,c,shape)=>`<marker id="${id}" viewBox="0 0 10 10" refX="${shape==='dot'?8:9}" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">${shape==='dot'?`<circle cx="5" cy="5" r="4.2" fill="${c}"/>`:`<path d="M0 0L10 5L0 10z" fill="${c}"/>`}</marker>`;
+  s+=`<defs>${mk('mk-s',ETYPES.soutient.color)}${mk('mk-r',ETYPES.repond.color)}${mk('mk-a',ETYPES.attaque.color,'dot')}</defs><rect width="100%" height="100%" fill="${TH.card}"/>`;
+  if(L.isoDepth>=0){
+    const iso=nodes.filter(nd=>nd.d===L.isoDepth);const y0=Math.min(...iso.map(nd=>nd.y))-24;
+    s+=`<text x="${PAD}" y="${y0+4}" font-size="11.5" fill="${TH.muted}" font-style="italic">hors argument (non relié au reste)</text>`;
+  }
+  let edgesSvg='',labels='',framesSvg='';
+  const bez=(x1,y1,x2,y2)=>{const my=(y1+y2)/2;return `M${x1},${y1} C${x1},${my} ${x2},${my} ${x2},${y2}`;};
+  const lab=(lx,ly,st)=>{labels+=`<text x="${lx}" y="${ly+4}" font-size="11" text-anchor="middle" fill="${st.color}" stroke="${TH.card}" stroke-width="4" paint-order="stroke" font-weight="600">${esc(st.label)}</text>`;};
+  /* cadre autour des prémisses liées */
+  const gmap={};nodes.forEach(nd=>{const g=units[nd.i].group;if(g)(gmap[g]=gmap[g]||[]).push(nd);});
+  const frames={};
+  for(const g in gmap){
+    const mem=gmap[g],tgt=nodes[units[mem[0].i].target];
+    if(mem.length<2||!mem.every(m=>m.d===mem[0].d)||tgt.d>=mem[0].d)continue;
+    const x1=Math.min(...mem.map(m=>m.x))-NW/2-12,x2=Math.max(...mem.map(m=>m.x))+NW/2+12;
+    const y1=Math.min(...mem.map(m=>m.y))-26,y2=Math.max(...mem.map(m=>m.y+m.h))+12;
+    frames[g]={x1,x2,y1,y2,cx:(x1+x2)/2,tgt};
+    framesSvg+=`<rect x="${x1}" y="${y1}" width="${x2-x1}" height="${y2-y1}" rx="12" fill="${TH.frameBg}" stroke="${TH.frameBd}" stroke-width="1.4"/><text x="${x2-9}" y="${y1+14}" font-size="10.5" fill="${TH.muted}" text-anchor="end" font-style="italic">prémisses liées</text>`;
+  }
+  units.forEach((u,i)=>u.edges.forEach(e=>{
+    if(u.group&&frames[u.group])return;
+    const a=nodes[i],b=nodes[e.to],st=ETYPES[e.type];
+    let x1,y1,x2,y2,d;
+    if(a.d>b.d){x1=a.x;y1=a.y;x2=b.x;y2=b.y+b.h;d=bez(x1,y1,x2,y2);}
+    else if(a.d<b.d){x1=a.x;y1=a.y+a.h;x2=b.x;y2=b.y;d=bez(x1,y1,x2,y2);}
+    else{const dir=a.x<b.x?1:-1;x1=a.x+dir*NW/2;y1=a.y+a.h/2;x2=b.x-dir*NW/2;y2=b.y+b.h/2;const lift=Math.min(a.y,b.y)-34;d=`M${x1},${y1} C${x1+dir*20},${lift} ${x2-dir*20},${lift} ${x2},${y2}`;}
+    edgesSvg+=`<path d="${d}" fill="none" stroke="${st.color}" stroke-width="2" ${st.dash?`stroke-dasharray="${st.dash}"`:''} marker-end="url(#${st.marker})"/>`;
+    lab((x1+x2)/2,a.d===b.d?Math.min(a.y,b.y)-22:(y1+y2)/2,st);
+  }));
+  for(const g in frames){
+    const f=frames[g],st=ETYPES.soutient,x2=f.tgt.x,y2=f.tgt.y+f.tgt.h;
+    edgesSvg+=`<path d="${bez(f.cx,f.y1,x2,y2)}" fill="none" stroke="${st.color}" stroke-width="2" marker-end="url(#${st.marker})"/>`;
+    lab((f.cx+x2)/2,(f.y1+y2)/2,st);
+  }
+  s+=framesSvg;s+=edgesSvg;
+  nodes.forEach(nd=>{
+    const u=units[nd.i],r=ROLES[u.role]||ROLES.enonce,isoN=nd.d===L.isoDepth;
+    s+=`<g class="node" data-u="${nd.i}"><title>${esc(u.text)}</title>
+<rect class="box" x="${nd.x-NW/2}" y="${nd.y}" width="${NW}" height="${nd.h}" rx="9" fill="${r.bg}" stroke="${r.bd}" stroke-width="${isoN?1.2:2}" ${(isoN||u.implicit)?'stroke-dasharray="4 3"':''}/>${flags&&flags.has(nd.i)?`<rect x="${nd.x-NW/2-4}" y="${nd.y-4}" width="${NW+8}" height="${nd.h+8}" rx="12" fill="none" stroke="#e5484d" stroke-width="3" stroke-dasharray="3 3"/>`:''}`;
+    nd.lines.forEach((ln,k)=>{s+=`<text x="${nd.x-NW/2+11}" y="${nd.y+19+k*LH}" font-size="12.5" fill="${TH.ink}">${esc(ln)}</text>`;});
+    s+=`<circle cx="${nd.x-NW/2}" cy="${nd.y}" r="10" fill="${r.bd}"/><text x="${nd.x-NW/2}" y="${nd.y+4}" font-size="11" font-weight="700" fill="${TH.onBd}" text-anchor="middle">${nd.i+1}</text></g>`;
+  });
+  s+=labels+'</svg>';
+  return s;
+}
+
+/* ================= Exports ================= */
+function adText(s){return s.replace(/\s+/g,' ').replace(/[\[\]<>*_`#]/g,c=>c==='['?'(':c===']'?')':'').trim();}
+function toArgdown(units){
+  let o="===\ntitle: Schéma d'argument\nauthor: Atelier d'argumentation\n===\n\n";
+  o+="/*\n  Correspondance : prémisse → +> ; objection et réponse → ->\n*/\n\n";
+  const seen=new Set();
+  units.forEach(u=>{if(u.gmembers&&!seen.has(u.gmembers[0])){seen.add(u.gmembers[0]);o+=`/*\n  Prémisses liées (à lire ensemble) : ${u.gmembers.map(j=>'[E'+(j+1)+']').join(' + ')} → [E${u.target+1}]\n*/\n\n`;}});
+  units.forEach((u,i)=>{
+    o+=`[E${i+1}]: ${adText((u.implicit?'(sous-entendu) ':'')+u.core)}\n`;
+    u.edges.forEach(e=>{o+=`  ${e.type==='soutient'?'+>':'->'} [E${e.to+1}]\n`;});
+    o+='\n';
+  });
+  return o.trimEnd()+'\n';
+}
+const DOT_ROLES={conclusion:['#fde9a9','#b7791f'],premisse:['#cfe6fb','#1d6fb8'],objection:['#fdd3d3','#c53030'],reponse:['#d4efd9','#2f855a'],enonce:['#f1f1f1','#8a94a3']};
+const DOT_EDGE={soutient:'#1d6fb8',attaque:'#c53030',repond:'#2f855a'};
+function toDot(units){
+  const q=s=>s.replace(/\\/g,'\\\\').replace(/"/g,'\\"');
+  let o='digraph argument {\n  rankdir=BT;\n  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11];\n  edge [fontname="Helvetica", fontsize=9];\n';
+  units.forEach((u,i)=>{
+    const r=DOT_ROLES[u.role]||DOT_ROLES.enonce;
+    o+=`  n${i+1} [label="${i+1}. ${wrap(u.core,38,6).map(q).join('\\n')}", fillcolor="${r[0]}", color="${r[1]}"${u.implicit?', style="rounded,filled,dashed"':''}];\n`;
+  });
+  const gs={};units.forEach((u,i)=>{if(u.group)(gs[u.group]=gs[u.group]||[]).push('n'+(i+1));});
+  Object.values(gs).forEach((mem,k)=>{o+=`  subgraph cluster_g${k+1} { label="prémisses liées"; style=rounded; color="#7b8ba1"; fontname="Helvetica"; fontsize=9; ${mem.join('; ')}; }\n`;});
+  units.forEach((u,i)=>u.edges.forEach(e=>{
+    const st=ETYPES[e.type];
+    o+=`  n${i+1} -> n${e.to+1} [label="${q(st.label)}", color="${DOT_EDGE[e.type]}", fontcolor="${DOT_EDGE[e.type]}"${st.dash?', style=dashed':''}${e.type==='attaque'?', arrowhead=odot':''}];\n`;
+  }));
+  return o+'}\n';
+}
+
+/* ================= Échantillons ================= */
+const EX1="Le ciel offre un mouvement uniforme, des révolutions régulières, un ordre et une beauté que rien ne vient jamais troubler : ce n’est pas un assemblage fortuit. Si nous entrons dans une maison où tout est disposé avec art et méthode, nous jugeons qu’une intelligence l’a ordonnée. Si nous voyons une horloge régler son mouvement, nous ne doutons pas qu’un artisan l’a construite. Or le ciel est un ordre bien plus vaste et bien plus constant : comment ne pas y voir l’œuvre d’une raison, et d’une raison divine ? Si nous n’en sommes pas frappés, c’est par accoutumance. Qu’on nous plonge dans l’obscurité qui couvrit l’Etna en éruption, et que le soleil reparaisse : nous le verrions comme un prodige. Mérite-t-il le nom d’homme, celui qui attribue au hasard un ordre si parfait ? Il faut donc conclure qu’une intelligence gouverne la nature.";
+const EX2="Rien ne se fait sans raison suffisante : si l’on connaissait assez les choses, on pourrait toujours dire pourquoi il en est ainsi et non autrement. Or l’univers existe, alors que le rien est plus simple et plus facile que quelque chose. Il faut donc qu’il y ait une raison suffisante de l’existence de l’univers. Or cette raison ne peut pas se trouver dans la suite des choses contingentes, c’est-à-dire des corps et de leurs mouvements, car la matière est indifférente en elle-même au mouvement et au repos. Certes, le mouvement présent vient du précédent, et celui-ci d’un autre encore ; mais on n’en est pas plus avancé, car la même question reste posée à chaque étape. Ainsi, la raison suffisante doit se trouver hors de la suite des choses contingentes, dans une substance qui en soit la cause et qui soit un être nécessaire, portant en elle la raison de son existence ; sinon, on n’aurait pas de raison suffisante où s’arrêter. Cet être nécessaire, c’est Dieu.";
+const EX3="Pour avoir le droit de croire le témoignage d’un homme, il faut de bonnes raisons de croire deux choses : qu’il s’efforce de parler sincèrement, et qu’il connaît réellement le sujet dont il parle. Or la plupart des gens se contentent de l’une des deux. Ils tiennent la noblesse du caractère d’un homme pour une raison d’accepter ses déclarations, même sur des choses qu'il ne peut pas connaître. Un musulman dira que le caractère de Mahomet est si noble qu’il commande le respect même des incroyants. Mais un bouddhiste peut aussi invoquer la grandeur du Bouddha. Or Mahomet dit qu’il n’y a qu’un seul Dieu, et le Bouddha qu’il n’y en a pas. Ils ne peuvent être tous deux infaillibles : l’un des deux au moins a été victime d’une illusion et a cru savoir ce qu’il ne savait pas. Mais personne ne peut savoir lequel. La bonté et la grandeur d’un homme ne nous justifient donc pas à croire sur la foi de son autorité, à moins que nous ayons des raisons de supposer qu’il connaît la vérité de ce qu’il dit. Or il ne peut y avoir aucune raison de supposer qu’un homme sait ce que nous n’avons aucun moyen de vérifier.";
+
+/* ================= Interface ================= */
+const S={text:'',fine:true,over:new Map(),seg:{joins:[],cuts:[]},implicit:[],units:[]};
+const $=id=>document.getElementById(id);
+const KEY='atelier-argumentation-v2';
+
+function save(){try{localStorage.setItem(KEY,JSON.stringify({text:S.text,fine:S.fine,over:[...S.over],seg:S.seg,implicit:S.implicit}));}catch(e){}}
+function load(){try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d){S.text=d.text||'';S.fine=d.fine!==false;S.over=new Map(migOver(d.over));if(d.seg)S.seg={joins:d.seg.joins||[],cuts:d.seg.cuts||[]};S.implicit=d.implicit||[];}}catch(e){}}
+
+function boxed(u){return u.conns.filter(c=>c.cat!=='these');}
+function setHtml(ids,h){ids.forEach(id=>{const el=$(id);if(el)el.innerHTML=h;});}
+
+function annotHTML(){
+  const text=S.text,units=S.units;
+  if(!units.length)return '<div class="empty">Le texte structuré apparaîtra ici.</div>';
+  const gap=g=>esc(g).replace(/\n/g,'<br>');
+  let h='',pos=0;
+  units.forEach((u,i)=>{
+    if(u.implicit){
+      h+=` <span class="u imp role-${u.role}" data-u="${i}" title="Prémisse sous-entendue (absente du texte)"><sup class="n">${i+1}</sup>⟨ ${esc(u.core)} ⟩</span>`;
+      return;
+    }
+    const g=text.slice(pos,u.start);
+    h+=u.pBreak?'<br><br>'+esc(g.replace(/\s+/g,' ').trim()?g.replace(/\s+/g,' '):''):gap(g);
+    let inner='',p=0;
+    boxed(u).forEach(c=>{if(c.start<p)return;inner+=esc(u.text.slice(p,c.start))+`<span class="c">${esc(u.text.slice(c.start,c.end))}</span>`;p=c.end;});
+    inner+=esc(u.text.slice(p));
+    h+=`<span class="u role-${u.role}" data-u="${i}" title="${esc(ROLES[u.role].label)}"><sup class="n">${i+1}</sup>${inner}</span>`;
+    pos=u.end;
+  });
+  h+=gap(text.slice(pos).replace(/\s+$/,''));
+  return h;
+}
+function renderAnnot(){setHtml(['annot','annot2'],annotHTML());}
+function legendRoles(){
+  return '<span class="lab">Fond = statut :</span>'+Object.keys(ROLES).map(k=>`<span class="chip role-${k}">${esc(ROLES[k].label)}</span>`).join('')
+    +'<span class="lab" style="margin-left:8px">Mot encadré = mot de liaison · ⟨ ⟩ = prémisse sous-entendue</span>';
+}
+function legendMap(){
+  return Object.keys(ETYPES).map(k=>`<span class="chip" style="background:var(--card);border-color:${ETYPES[k].color};color:${ETYPES[k].color};font-weight:600">${esc(ETYPES[k].label)}</span>`).join('')+'<span class="chip" style="background:var(--frame-bg);border-color:var(--frame-bd);color:var(--muted)">cadre = prémisses liées</span>';
+}
+function renderLegends(){
+  setHtml(['legend-roles','legend-roles2'],legendRoles());
+  setHtml(['maplegend','maplegend2'],legendMap());
+}
+/* ------- comparaison de structures ------- */
+const CMP={data:null,units:null,name:''};
+/* forme canonique d'un argument : statuts et liens seulement, sans le texte ni l'ordre des énoncés */
+function structure(units){
+  const n=units.length,kids=Array.from({length:n},()=>[]);
+  units.forEach((u,i)=>{if(u.target>=0)kids[u.target].push(i);});
+  const inArg=units.map((u,i)=>u.target>=0||kids[i].length>0);
+  const canon=new Array(n);
+  const rec=(i,stack)=>{
+    if(canon[i]!==undefined)return canon[i];
+    if(stack.has(i))return '∞';
+    stack.add(i);
+    const parts=[],groups=new Map();
+    kids[i].forEach(k=>{
+      const c=rec(k,stack),g=units[k].group;
+      if(g){if(!groups.has(g))groups.set(g,[]);groups.get(g).push(c);}else parts.push(c);
+    });
+    groups.forEach(a=>parts.push('['+a.sort().join(',')+']'));
+    parts.sort();stack.delete(i);
+    return canon[i]=units[i].status+(parts.length?'('+parts.join(',')+')':'');
+  };
+  units.forEach((u,i)=>{if(inArg[i])rec(i,new Set());});
+  const roots=[];units.forEach((u,i)=>{if(inArg[i]&&u.target<0)roots.push(canon[i]);});
+  const counts={conclusion:0,premisse:0,objection:0,reponse:0},gs=new Set();
+  units.forEach((u,i)=>{if(!inArg[i])return;if(counts[u.status]!==undefined)counts[u.status]++;if(u.group)gs.add(u.group);});
+  const nIn=inArg.filter(Boolean).length;
+  return {inArg,canon,key:roots.sort().join(' | '),counts,groups:gs.size,n:nIn,hors:n-nIn};
+}
+/* Repérage indicatif des différences : on apparie les énoncés des deux schémas (de haut en bas, statut identique,
+   en maximisant la part commune des sous-structures ; à structure égale, le texte identique départage),
+   puis on signale les énoncés sans correspondant et ceux dont les prémisses liées ne correspondent pas. */
+function diffHints(ua,ub){
+  const kids=us=>{const k=Array.from({length:us.length},()=>[]);us.forEach((u,i)=>{if(u.target>=0&&u.target<us.length)k[u.target].push(i);});return k;};
+  const ka=kids(ua),kb=kids(ub),memo=new Map();
+  const same=(i,j)=>norm(ua[i].text||'')===norm(ub[j].text||'')?0.001:0;
+  // apparie deux listes de frères ; renvoie {score,pairs}
+  const matchLists=(la,lb,depth)=>{
+    const cand=[];
+    la.forEach(i=>lb.forEach(j=>{
+      if(ua[i].status!==ub[j].status)return;
+      const r=sub(i,j,depth+1);cand.push({i,j,sc:r.score+same(i,j),r});
+    }));
+    cand.sort((x,y)=>y.sc-x.sc);
+    const ua_=new Set(),ub_=new Set(),pairs=[];let score=0;
+    cand.forEach(c=>{if(ua_.has(c.i)||ub_.has(c.j))return;ua_.add(c.i);ub_.add(c.j);pairs.push([c.i,c.j]);score+=c.sc;c.r.pairs.forEach(p=>pairs.push(p));});
+    return {score,pairs};
+  };
+  const sub=(i,j,depth)=>{
+    const key=i+'/'+j;if(memo.has(key))return memo.get(key);
+    let r;
+    if(depth>40)r={score:1,pairs:[[i,j]]};
+    else{const m=matchLists(ka[i],kb[j],depth);r={score:1+m.score,pairs:[[i,j]].concat(m.pairs)};}
+    memo.set(key,r);return r;
+  };
+  const inA=ua.map((u,i)=>u.target>=0||ka[i].length>0),inB=ub.map((u,i)=>u.target>=0||kb[i].length>0);
+  const rootsA=ua.map((u,i)=>i).filter(i=>inA[i]&&ua[i].target<0),rootsB=ub.map((u,i)=>i).filter(i=>inB[i]&&ub[i].target<0);
+  const top=matchLists(rootsA,rootsB,0);
+  const mapAB=new Map(),mapBA=new Map();top.pairs.forEach(([i,j])=>{mapAB.set(i,j);mapBA.set(j,i);});
+  const fa=new Set(),fb=new Set();
+  ua.forEach((u,i)=>{if(inA[i]&&!mapAB.has(i))fa.add(i);});
+  ub.forEach((u,j)=>{if(inB[j]&&!mapBA.has(j))fb.add(j);});
+  // prémisses liées : mêmes « compagnons » (parmi les énoncés appariés) de part et d'autre ?
+  const mates=(us,i)=>us[i].group?us.map((v,k)=>k).filter(k=>k!==i&&us[k].group===us[i].group&&us[k].target===us[i].target):[];
+  mapAB.forEach((j,i)=>{
+    const ma=mates(ua,i).filter(k=>mapAB.has(k)).map(k=>mapAB.get(k)).sort((x,y)=>x-y).join(',');
+    const mb=mates(ub,j).filter(k=>mapBA.has(k)).map(k=>k).sort((x,y)=>x-y).join(',');
+    if(ma!==mb){fa.add(i);fb.add(j);}
+  });
+  return {a:fa,b:fb};
+}
+/* un travail enregistré, analysé avec SES mots de liaison (ou ceux par défaut), pas ceux de l'appli */
+function analyseWork(d){
+  const saved=LEXICON;
+  try{
+    setLexicon(d.lex&&typeof d.lex==='object'?normLex(d.lex):cloneLex(DEFAULT_LEX));
+    return analyse(d.text,{fine:d.fine!==false,over:new Map(migOver(d.over)),seg:d.seg?{joins:d.seg.joins||[],cuts:d.seg.cuts||[]}:{joins:[],cuts:[]},implicit:Array.isArray(d.implicit)?d.implicit:[]});
+  }finally{setLexicon(saved);}
+}
+const CMP_NAMES={conclusion:'Conclusions',premisse:'Prémisses',objection:'Objections',reponse:'Réponses'};
+function cmpSvg(units,flags){return mapSVG(units,flags).replace(/ data-u="\d+"/g,'').replace(/class="node"/g,'class="cnode"');}
+function renderCompare(){
+  const ml=$('cmp-map-l');if(!ml)return;
+  const cur=structure(S.units),ref=CMP.units?structure(CMP.units):null,hint=$('cmp-hint').checked&&!!ref;
+  const HINT=hint?diffHints(CMP.units,S.units):null;
+  let state='none',html='<span>Chargez le travail d\'un autre élève, ou une correction, pour comparer les structures.</span>';
+  if(ref){
+    const det=[];
+    const side=(a,b)=>`${a} (comparaison) / ${b} (actuelle)`;
+    if(!ref.n&&!cur.n){html='<span>Aucune structure à comparer : aucun énoncé n\'est relié aux autres, des deux côtés.</span>';}
+    else if(ref.key===cur.key){state='ok';html='<b>✓ Structures identiques</b>';}
+    else{
+      state='ko';html='<b>✗ Structures différentes</b>';
+      for(const k in CMP_NAMES)if(ref.counts[k]!==cur.counts[k])det.push(`${CMP_NAMES[k]} : ${side(ref.counts[k],cur.counts[k])}`);
+      if(ref.groups!==cur.groups)det.push(`Groupes de prémisses liées : ${side(ref.groups,cur.groups)}`);
+      if(!det.length)det.push('Les mêmes éléments sont présents, mais ils ne sont pas reliés de la même façon.');
+    }
+    if(ref.hors!==cur.hors)det.push(`Hors argument (non pris en compte) : ${side(ref.hors,cur.hors)}`);
+    if(det.length)html+=`<div class="det">${det.map(esc).join(' · ')}</div>`;
+  }
+  const v=$('cmp-verdict');v.className='cmp-verdict '+state;v.innerHTML=html;
+  $('cmp-left').className='cmp-pane '+state;$('cmp-right').className='cmp-pane '+state;
+  ml.innerHTML=CMP.units?(CMP.units.length?cmpSvg(CMP.units,hint?HINT.a:null):'<div class="empty">Ce fichier ne contient pas de texte.</div>'):'<div class="empty">Le schéma de comparaison apparaîtra ici.</div>';
+  $('cmp-map-r').innerHTML=S.units.length?cmpSvg(S.units,hint?HINT.b:null):'<div class="empty">Le schéma apparaîtra ici.</div>';
+  $('cmp-name').textContent=CMP.name?'— '+CMP.name:'';
+  $('cmp-clear').hidden=!CMP.units;
+  $('cmp-legend').innerHTML=legendMap()+(hint?'<span class="chip" style="background:var(--card);border:2px dashed #e5484d;color:var(--ink)">contour rouge pointillé = partie sans équivalent de l\'autre côté</span>':'');
+}
+function loadCompare(d,name){
+  if(!d||d.app!=='atelier-argumentation'||typeof d.text!=='string')throw new Error('format');
+  CMP.data=d;CMP.name=name||'';CMP.units=analyseWork(d);renderCompare();
+}
+function renderMap(){setHtml(['map','map2'],S.units.length?mapSVG(S.units):'<div class="empty">Le schéma apparaîtra ici.</div>');}
+
+function groupRow(u,i){
+  if(u.status!=='premisse'||u.target<0)return '';
+  const units=S.units,mem=u.gmembers?u.gmembers.filter(j=>j!==i):[];
+  const cands=units.map((v,j)=>({v,j})).filter(({v,j})=>j!==i&&v.status==='premisse'&&v.target===u.target&&!(u.gmembers&&u.gmembers.includes(j)));
+  if(!mem.length&&!cands.length)return '';
+  return `<div class="chead grp">${mem.length?`<span class="lw">Liée avec ${mem.map(j=>'#'+(j+1)).join(', ')}</span>`:''}`
+    +(cands.length?`<select data-act="gadd" data-i="${i}"><option value="">＋ lier à une autre prémisse…</option>${cands.map(({v,j})=>`<option value="${j}">${j+1}. ${esc(v.core.length>34?v.core.slice(0,33)+'…':v.core)}</option>`).join('')}</select>`:'')
+    +(u.group?`<button class="ghost" data-act="gdel" data-i="${i}" title="Sortir de ce groupe">dégrouper</button>`:'')+'</div>';
+}
+function renderCards(){
+  const box=$('cards'),top=box.scrollTop,units=S.units;
+  if(!units.length){box.innerHTML='<div class="empty">Aucun énoncé.</div>';return;}
+  const stOpts=sel=>Object.keys(ROLES).map(k=>`<option value="${k}"${k===sel?' selected':''}>${esc(ROLES[k].label)}</option>`).join('');
+  const toOpts=(sel,self,st)=>{
+    const ok=j=>j!==self&&(st!=='reponse'||units[j].status==='objection'||j===sel);
+    const list=units.map((v,j)=>ok(j)?`<option value="${j}"${j===sel?' selected':''}>${j+1}. ${esc(v.core.length>34?v.core.slice(0,33)+'…':v.core)}</option>`:'').join('');
+    return (sel<0?`<option value="" selected disabled>${st==='reponse'&&!list?'— aucune objection —':'— choisir —'}</option>`:'')+list;
+  };
+  box.innerHTML=units.map((u,i)=>{
+    const linked=!!STATUS_EDGE[u.status];
+    return `<div class="card role-${u.role}" id="card-${i}" data-u="${i}">
+  <div class="chead"><b>#${i+1}</b>
+    <select data-act="status" data-i="${i}">${stOpts(u.status)}</select>
+    ${linked?`<span class="lw">${LINK_WORD[u.status]}</span><select data-act="target" data-i="${i}" class="${u.target<0?'need':''}">${toOpts(u.target,i,u.status)}</select>`:''}
+    ${u.status==='conclusion'?'<span class="lw">conclut : pas de lien</span>':''}${u.status==='enonce'?'<span class="lw">hors de l\'argumentation : pas de lien</span>':''}
+    ${u.manual?`<span class="tag">ajusté</span><button class="ghost" data-act="reset" data-i="${i}" title="Revenir au repérage automatique">↺</button>`:''}
+  </div>
+  <div class="ctext">${u.implicit?'<em>(sous-entendu)</em> ':''}${esc(u.core.length>150?u.core.slice(0,149)+'…':u.core)}</div>
+  ${groupRow(u,i)}
+</div>`;}).join('');
+  box.scrollTop=top;
+}
+
+function renderSeg(){
+  const box=$('seg'),units=S.units,top=box.scrollTop;
+  if(!units.length){box.innerHTML='<div class="empty">Aucun énoncé.</div>';return;}
+  let o='';
+  units.forEach((u,i)=>{
+    if(u.implicit){
+      o+=`<div class="srow imp role-${u.role}" data-u="${i}"><span class="sn">${i+1}</span><div class="stext"><input class="impin" data-imp="${u.id}" value="${esc(u.text)}" placeholder="Formulez la prémisse sous-entendue…"></div><button class="ghost" data-impdel="${u.id}" title="Supprimer cette prémisse">×</button></div>`;
+    }else{
+      const ranges=boxed(u),words=[...u.text.matchAll(/\S+/g)];let t='';
+      words.forEach((m,k)=>{
+        const cw=ranges.some(c=>m.index>=c.start&&m.index<c.end);
+        t+=`<span class="${cw?'cw':''}">${esc(m[0])}</span>`;
+        if(k+1<words.length)t+=`<i class="cut" data-cut="${u.start+words[k+1].index}" title="Couper ici"></i>`;
+      });
+      o+=`<div class="srow role-${u.role}" data-u="${i}"><span class="sn">${i+1}</span><div class="stext">${t}</div></div>`;
+    }
+    const next=units[i+1];let b='';
+    if(!u.implicit&&next&&!next.implicit)b+=`<button data-join="${next.start}" title="Fusionner les énoncés ${i+1} et ${i+2}">⇅ fusionner</button>`;
+    b+=`<button data-impadd="${esc(u.key)}" title="Ajouter une prémisse sous-entendue après cet énoncé">＋ prémisse implicite</button>`;
+    o+=`<div class="sjoin">${b}</div>`;
+  });
+  box.innerHTML=o;box.scrollTop=top;
+}
+/* ------- les réglages suivent un énoncé que l'on corrige dans le texte ------- */
+/* distance d'édition bornée : renvoie max+1 dès que la distance dépasse max */
+function lev(a,b,max){
+  if(Math.abs(a.length-b.length)>max)return max+1;
+  let prev=Array.from({length:b.length+1},(_,j)=>j);
+  for(let i=1;i<=a.length;i++){
+    const cur=[i];let best=i;
+    for(let j=1;j<=b.length;j++){
+      const v=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));
+      cur[j]=v;if(v<best)best=v;
+    }
+    if(best>max)return max+1;
+    prev=cur;
+  }
+  return prev[b.length];
+}
+/* coût de rapprochement d'un énoncé disparu (o) et d'un énoncé nouveau (f) ; null s'ils ne se ressemblent pas */
+function closeness(o,f){
+  const thr=Math.min(6,Math.floor(Math.min(o.length,f.length)*0.3));
+  const d=thr>=1?lev(o,f,thr):(o===f?0:1);
+  if(d<=thr)return d;
+  const m=Math.min(o.length,f.length);
+  if(m>=28){
+    let cp=0;while(cp<m&&o[cp]===f[cp])cp++;
+    let cs=0;while(cs<m-cp&&o[o.length-1-cs]===f[f.length-1-cs])cs++;
+    if(cp>=12&&cs>=12)return 1000+Math.max(o.length,f.length)-cp-cs;   /* début et fin inchangés : seul l'intérieur a bougé */
+  }
+  return null;
+}
+function reconcile(newText){
+  const old=S.units.filter(u=>!u.implicit);if(!old.length)return;
+  const nu=new Set(applySeg(newText,segment(newText,S.fine),S.seg).map(u=>norm(u.text)));
+  const oldSet=new Set(old.map(u=>u.key));
+  const used=new Set(S.over.keys());
+  S.over.forEach(o=>{if(o.target)used.add(o.target);});S.implicit.forEach(im=>used.add(im.after));
+  const gone=[...used].filter(k=>oldSet.has(k)&&!nu.has(k));
+  const fresh=[...nu].filter(k=>!oldSet.has(k));
+  if(!gone.length||!fresh.length||gone.length*fresh.length>2500)return;
+  const pairs=[];
+  gone.forEach(g=>fresh.forEach(f=>{const c=closeness(g,f);if(c!==null)pairs.push({g,f,c});}));
+  pairs.sort((a,b)=>a.c-b.c);
+  const ren=new Map(),taken=new Set();
+  pairs.forEach(({g,f})=>{if(!ren.has(g)&&!taken.has(f)){ren.set(g,f);taken.add(f);}});
+  if(!ren.size)return;
+  const over=new Map();
+  S.over.forEach((o,k)=>{if(o.target&&ren.has(o.target))o.target=ren.get(o.target);over.set(ren.get(k)||k,o);});
+  S.over=over;
+  S.implicit.forEach(im=>{if(ren.has(im.after))im.after=ren.get(im.after);});
+}
+function opJoin(start){
+  const s=sig(S.text,start),g=S.seg;
+  if(g.cuts.includes(s))g.cuts=g.cuts.filter(x=>x!==s);else if(!g.joins.includes(s))g.joins.push(s);
+}
+function opCut(p){
+  const s=sig(S.text,p),g=S.seg;
+  if(g.joins.includes(s))g.joins=g.joins.filter(x=>x!==s);else if(!g.cuts.includes(s))g.cuts.push(s);
+}
+function renderExports(){
+  $('out-ad').value=S.units.length?toArgdown(S.units):'';
+  $('out-dot').value=S.units.length?toDot(S.units):'';
+}
+function recompute(o){
+  S.units=analyse(S.text,{fine:S.fine,over:S.over,seg:S.seg,implicit:S.implicit});
+  renderAnnot();renderMap();renderCompare();renderCards();if(!(o&&o.skipSeg))renderSeg();renderExports();save();
+}
+
+/* ------- statut et lien d'un énoncé ------- */
+function ovOf(i){const u=S.units[i];let ov=S.over.get(u.key);if(!ov){ov={};S.over.set(u.key,ov);}return ov;}
+function onCardChange(e){
+  const t=e.target,act=t.dataset.act;if(!act)return;const i=+t.dataset.i;
+  if(act==='status')ovOf(i).status=t.value;
+  else if(act==='target')ovOf(i).target=S.units[+t.value].key;
+  else if(act==='gadd'){
+    if(t.value==='')return;
+    const oi=ovOf(i),oj=ovOf(+t.value),gi=oi.group,gj=oj.group;
+    const gid=gi||gj||'g'+Date.now().toString(36)+Math.floor(Math.random()*1000);
+    S.over.forEach(o=>{if(o.group&&(o.group===gi||o.group===gj))o.group=gid;});
+    oi.group=gid;oj.group=gid;
+  }
+  recompute();
+}
+function onCardClick(e){
+  const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.act==='reset'){S.over.delete(S.units[+b.dataset.i].key);recompute();}
+  else if(b.dataset.act==='gdel'){delete ovOf(+b.dataset.i).group;recompute();}
+}
+
+/* ------- survol / clic / onglets ------- */
+function clearHl(){document.querySelectorAll('.hl').forEach(el=>el.classList.remove('hl'));}
+function gotoCard(i){
+  if($('tab-main').hidden)return;
+  const c=$('card-'+i);if(!c)return;c.scrollIntoView({block:'nearest',behavior:'smooth'});
+  c.classList.remove('flash');void c.offsetWidth;c.classList.add('flash');
+}
+function download(name,content,type){
+  const blob=(typeof Blob!=='undefined'&&content instanceof Blob)?content:new Blob([content],{type:type||'text/plain;charset=utf-8'});const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);
+}
+function copy(id){
+  const txt=$(id).value;
+  const fb=()=>{const t=document.createElement('textarea');t.value=txt;document.body.appendChild(t);t.select();try{document.execCommand('copy');}catch(e){}t.remove();};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).catch(fb);else fb();
+}
+/* ------- exports : PNG du schéma, PDF du texte (toujours en couleurs claires) ------- */
+function lightTheme(){return makeTheme(PALETTES[PREF.palette]||PALETTES.classique,false);}
+function withLight(fn){
+  const cur=makeTheme(PALETTES[PREF.palette]||PALETTES.classique,isDark());
+  setGlobals(lightTheme());
+  try{return fn();}finally{setGlobals(cur);}
+}
+function lightSvg(){return withLight(()=>mapSVG(S.units));}
+function exportPng(){
+  const svg=lightSvg(),m=svg.match(/ width="([\d.]+)" height="([\d.]+)"/);if(!m)return;
+  const w=+m[1],hh=+m[2],sc=2,img=new Image();
+  img.onload=()=>{
+    const c=document.createElement('canvas');c.width=Math.round(w*sc);c.height=Math.round(hh*sc);
+    const x=c.getContext('2d');x.scale(sc,sc);x.drawImage(img,0,0,w,hh);
+    c.toBlob(b=>{if(b)download('schema-argument.png',b,'image/png');},'image/png');
+  };
+  img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+}
+function buildPrint(){
+  const sh=$('print-sheet');if(!sh)return;
+  const t=lightTheme();
+  sh.style.cssText=Object.keys(t.v).map(k=>k+':'+t.v[k]).join(';');
+  const withMap=!$('pdf-map')||$('pdf-map').checked;
+  const date=new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+  let out='';
+  withLight(()=>{
+    out=`<h1>Atelier d'argumentation</h1><p class="pdate">Texte structuré — ${esc(date)}</p><div class="pt">${annotHTML()}</div><div class="legend">${legendRoles()}</div>`;
+    if(withMap&&S.units.length)out+=`<div class="pmap"><h2>Schéma en arbre de l'argumentation</h2>${mapSVG(S.units)}<div class="legend">${legendMap()}</div></div>`;
+  });
+  sh.innerHTML=out;
+}
+function showTab(name){
+  document.querySelectorAll('.tab').forEach(t=>{t.hidden=t.id!=='tab-'+name;});
+  document.querySelectorAll('.tabbtn').forEach(b=>{const on=b.dataset.tab===name;b.classList.toggle('on',on);b.setAttribute('aria-selected',on?'true':'false');});
+}
+
+function init(){
+  load();loadPrefs();loadLex();applyTheme();renderPalettes();renderLex();
+  $('src').value=S.text;$('fine').checked=S.fine;
+  renderLegends();
+  let timer=null;
+  $('src').addEventListener('input',()=>{S.text=$('src').value;clearTimeout(timer);timer=setTimeout(()=>{reconcile(S.text);recompute();},220);});
+  $('fine').addEventListener('change',()=>{S.fine=$('fine').checked;recompute();});
+  const setText=t=>{S.text=t;$('src').value=t;S.over=new Map();S.seg={joins:[],cuts:[]};S.implicit=[];recompute();};
+  $('ex1').onclick=()=>setText(EX1);$('ex2').onclick=()=>setText(EX2);$('ex3').onclick=()=>setText(EX3);$('clr').onclick=()=>setText('');
+  $('seg').addEventListener('click',e=>{
+    const c=e.target.closest('.cut'),j=e.target.closest('[data-join]'),a=e.target.closest('[data-impadd]'),d=e.target.closest('[data-impdel]');
+    if(c){opCut(+c.dataset.cut);recompute();}
+    else if(j){opJoin(+j.dataset.join);recompute();}
+    else if(a){
+      const id='i'+Date.now().toString(36)+Math.floor(Math.random()*1000);
+      S.implicit.push({id,text:'',after:a.dataset.impadd});recompute();
+      const el=document.querySelector(`[data-imp="${id}"]`);if(el)el.focus();
+    }else if(d){S.implicit=S.implicit.filter(x=>x.id!==d.dataset.impdel);S.over.delete('§'+d.dataset.impdel);recompute();}
+  });
+  $('seg').addEventListener('input',e=>{
+    const t=e.target;if(!t.dataset||!t.dataset.imp)return;
+    const im=S.implicit.find(x=>x.id===t.dataset.imp);if(im){im.text=t.value;recompute({skipSeg:true});}
+  });
+  $('seg-reset').onclick=()=>{S.seg={joins:[],cuts:[]};recompute();};
+  $('cards').addEventListener('change',onCardChange);$('cards').addEventListener('click',onCardClick);
+  document.addEventListener('mouseover',e=>{
+    const t=e.target.closest&&e.target.closest('[data-u]');clearHl();
+    if(t)document.querySelectorAll(`[data-u="${t.dataset.u}"]:not(.card)`).forEach(el=>el.classList.add('hl'));
+  });
+  document.addEventListener('mouseleave',clearHl);
+  document.addEventListener('click',e=>{
+    const t=e.target.closest('.u,.node');if(t)gotoCard(+t.dataset.u);
+    const c=e.target.closest('[data-copy]');if(c)copy(c.dataset.copy);
+    const d=e.target.closest('[data-dl]');if(d)download(d.dataset.name,$(d.dataset.dl).value);
+    const sv=e.target.closest('[data-svg]');if(sv&&S.units.length)download('schema-argument.svg',lightSvg(),'image/svg+xml');
+    const pn=e.target.closest('[data-png]');if(pn&&S.units.length)exportPng();
+    const pf=e.target.closest('[data-pdf]');if(pf&&S.units.length){buildPrint();window.print();}
+    const tb=e.target.closest('.tabbtn');if(tb)showTab(tb.dataset.tab);
+  });
+  document.querySelectorAll('[data-fit]').forEach(cb=>{
+    const m=$(cb.dataset.fit);m.classList.toggle('fit',cb.checked);
+    cb.addEventListener('change',()=>m.classList.toggle('fit',cb.checked));
+  });
+  window.addEventListener('beforeprint',buildPrint);
+  initTools();
+  showTab('main');
+  recompute();
+}
+
+/* ================= Apparence ================= */
+const PALETTES={
+  classique:{label:'Classique',accent:[215,42],tint:[215,22],hues:{conclusion:42,premisse:210,objection:2,reponse:145}},
+  daltonien:{label:'Contrasté',accent:[205,65],tint:[0,0],rs:92,rl:80,bs:75,bl:28,hues:{conclusion:50,premisse:215,objection:25,reponse:170}},
+  foret:{label:'Forêt',accent:[150,45],tint:[125,20],rs:52,rl:85,bs:45,bl:28,hues:{conclusion:55,premisse:178,objection:350,reponse:95}},
+  sepia:{label:'Sépia',accent:[25,55],tint:[38,50],rs:38,rl:83,bs:34,bl:30,hues:{conclusion:56,premisse:200,objection:352,reponse:105}},
+  prune:{label:'Prune',accent:[285,42],tint:[285,24],rs:68,rl:89,bs:50,bl:38,hues:{conclusion:48,premisse:268,objection:335,reponse:175}}
+};
+const TH={ink:'#1f2933',muted:'#5f6b7a',card:'#ffffff',onBd:'#ffffff',frameBg:'#f4f7fb',frameBd:'#7b8ba1'};
+const PREF_KEY='atelier-argumentation-theme',LEX_KEY='atelier-argumentation-lex';
+let PREF={palette:'classique',mode:'auto'};
+const hsl=(h,s,l)=>`hsl(${h} ${s}% ${l}%)`;
+function isDark(){
+  if(PREF.mode==='sombre')return true;
+  if(PREF.mode==='clair')return false;
+  return typeof window!=='undefined'&&typeof window.matchMedia==='function'&&window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+function makeTheme(pal,dark){
+  const [ah,as]=pal.accent,[th,ts]=pal.tint,v={},roles={};
+  if(dark)Object.assign(v,{'--bg':hsl(th,ts*.5,9),'--card':hsl(th,ts*.5,14),'--input':hsl(th,ts*.5,11),'--hover':hsl(th,ts*.5,21),'--line':hsl(th,ts*.4,27),'--ink':hsl(th,14,90),'--muted':hsl(th,8,66),
+    '--accent':hsl(ah,as,24),'--accent2':hsl(ah,Math.min(as+15,70),74),'--on-accent':'#ffffff','--focus':hsl(ah,55,55),'--on-rd':'#10141a',
+    '--conn-bd':hsl(th,10,75),'--conn-bg':'rgba(0,0,0,.35)','--conn-ink':'#ffffff','--chip-bd':'rgba(255,255,255,.18)',
+    '--tag-bg':'hsl(45 55% 22%)','--tag-ink':'hsl(45 85% 82%)','--need-bd':'#f0883e','--need-bg':'hsl(25 45% 20%)','--frame-bg':hsl(ah,22,18),'--frame-bd':hsl(ah,18,52),'--ok':'#4cc38a','--ko':'#f26d6d'});
+  else Object.assign(v,{'--bg':hsl(th,ts,95),'--card':hsl(th,Math.min(ts,25),99),'--input':hsl(th,Math.min(ts,25),100),'--hover':hsl(th,ts+6,92),'--line':hsl(th,ts*.9+4,84),'--ink':hsl(th,25,15),'--muted':hsl(th,10,40),
+    '--accent':hsl(ah,as+10,32),'--accent2':hsl(ah,as+10,32),'--on-accent':'#ffffff','--focus':hsl(ah,60,65),'--on-rd':'#ffffff',
+    '--conn-bd':hsl(th,15,22),'--conn-bg':'rgba(255,255,255,.8)','--conn-ink':'#111111','--chip-bd':'rgba(0,0,0,.12)',
+    '--tag-bg':'#fff3b0','--tag-ink':'#7a5b00','--need-bd':'#dd6b20','--need-bg':'#fff4e8','--frame-bg':hsl(ah,30,96),'--frame-bd':hsl(ah,18,58),'--ok':'#2b9a66','--ko':'#d9363e'});
+  for(const k in pal.hues){
+    const h=pal.hues[k];
+    const rs=pal.rs||78,rl=pal.rl||87,bs=pal.bs||55,bl=pal.bl||36;
+    roles[k]=dark?{bg:hsl(h,Math.round(rs*.4),22),bd:hsl(h,Math.min(bs+5,80),66)}:{bg:hsl(h,rs,rl),bd:hsl(h,bs,bl)};
+  }
+  roles.enonce=dark?{bg:'hsl(0 0% 22%)',bd:'hsl(220 10% 62%)'}:{bg:'hsl(0 0% 94%)',bd:'hsl(220 10% 55%)'};
+  for(const k in roles){v['--bg-'+k]=roles[k].bg;v['--bd-'+k]=roles[k].bd;}
+  return {v,roles};
+}
+/* couleurs utilisées par le schéma (SVG) : règle les globales sans toucher à la page */
+function setGlobals(t){
+  for(const k in t.roles){ROLES[k].bg=t.roles[k].bg;ROLES[k].bd=t.roles[k].bd;}
+  ETYPES.soutient.color=t.roles.premisse.bd;ETYPES.attaque.color=t.roles.objection.bd;ETYPES.repond.color=t.roles.reponse.bd;
+  Object.assign(TH,{ink:t.v['--ink'],muted:t.v['--muted'],card:t.v['--card'],onBd:t.v['--on-rd'],frameBg:t.v['--frame-bg'],frameBd:t.v['--frame-bd']});
+}
+function applyTheme(){
+  const dark=isDark(),t=makeTheme(PALETTES[PREF.palette]||PALETTES.classique,dark);
+  if(typeof document!=='undefined'){
+    const st=document.documentElement.style;
+    for(const k in t.v)st.setProperty(k,t.v[k]);
+    st.colorScheme=dark?'dark':'light';
+  }
+  setGlobals(t);
+  if(typeof document!=='undefined'&&$('legend-roles')){renderLegends();renderMap();renderCompare();}
+}
+function loadPrefs(){try{const d=JSON.parse(localStorage.getItem(PREF_KEY)||'null');if(d){if(PALETTES[d.palette])PREF.palette=d.palette;if(['clair','sombre','auto'].includes(d.mode))PREF.mode=d.mode;}}catch(e){}}
+function savePrefs(){try{localStorage.setItem(PREF_KEY,JSON.stringify(PREF));}catch(e){}}
+function renderPalettes(){
+  const dark=isDark();
+  $('palettes').innerHTML=Object.keys(PALETTES).map(k=>{
+    const r=makeTheme(PALETTES[k],dark).roles;
+    const v=makeTheme(PALETTES[k],dark).v;
+    return `<button class="pal" data-pal="${k}" aria-pressed="${k===PREF.palette}"><span class="pv" style="background:${v['--bg']};border-color:${v['--line']}"><b style="background:${v['--accent']}"></b><span class="sw">${['conclusion','premisse','objection','reponse'].map(x=>`<i style="background:${r[x].bg};border-color:${r[x].bd}"></i>`).join('')}</span></span>${esc(PALETTES[k].label)}</button>`;
+  }).join('');
+  document.querySelectorAll('.modebtn').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===PREF.mode?'true':'false'));
+}
+
+/* ================= Mots de liaison (éditeur) ================= */
+const LEX_INFO={
+  conclusion:['Conclusion',"introduit ce qui est conclu : donc, par conséquent… En pointillé : prises de position (je pense que, il faut…), repérées mais non encadrées dans le texte."],
+  premisse:['Prémisse',"introduit une raison, un argument ou un exemple : car, puisque, de plus, par exemple…"],
+  objection:['Objection',"s'oppose à l'énoncé défendu, ou l'annonce : certes, on pourrait objecter que, au contraire…"],
+  reponse:['Réponse',"répond à une objection : mais, cependant, pourtant… (sans objection juste avant, l'énoncé s'oppose simplement au précédent)"]
+};
+/* accepte les anciens formats (jusqu'à 10 catégories) comme le nouveau (4 catégories) */
+function normLex(d){
+  const l={conclusion:[],premisse:[],objection:[],reponse:[]},seen=new Set();
+  if('reponse' in d){
+    for(const k in l)if(Array.isArray(d[k]))for(const x of d[k]){const w=normWord(String(x));if(w&&!seen.has(w)){seen.add(w);l[k].push(w);}}
+    return l;
+  }
+  const LEG={conclusion:'conclusion',these:'conclusion',premisse:'premisse',justification:'premisse',addition:'premisse',exemple:'premisse',illustration:'premisse',objection:'objection',opposition:'objection',concession:'objection'};
+  for(const k in LEG){
+    if(!Array.isArray(d[k]))continue;
+    for(const x of d[k]){const w=normWord(String(x));if(!w||seen.has(w)||DROPPED.has(w))continue;seen.add(w);const f=SUB.get(w);l[f?FINE_TO_STATUS[f]:LEG[k]].push(w);}
+  }
+  return l;
+}
+const lexIsDefault=()=>Object.keys(DEFAULT_LEX).every(k=>JSON.stringify(LEXICON[k].slice().sort())===JSON.stringify(DEFAULT_LEX[k].slice().sort()));
+function loadLex(){
+  try{const d=JSON.parse(localStorage.getItem(LEX_KEY)||'null');
+    if(d)setLexicon(normLex(d));}catch(e){}
+}
+function saveLex(){try{localStorage.setItem(LEX_KEY,JSON.stringify(LEXICON));}catch(e){}}
+function lexFind(w,exceptCat,exceptK){for(const c in LEXICON)for(let k=0;k<LEXICON[c].length;k++)if(LEXICON[c][k]===w&&!(c===exceptCat&&k===exceptK))return c;return null;}
+function lexMsg(t){const m=$('lex-msg');if(m)m.textContent=t||'';}
+function renderLex(){
+  $('lex').innerHTML=Object.keys(DEFAULT_LEX).map(cat=>`<div class="lexcat role-${cat}"><h3><span class="chip">${esc(LEX_INFO[cat][0])}</span><small>${esc(LEX_INFO[cat][1])}</small></h3>
+  <div class="lexwords">${LEXICON[cat].map((w,k)=>`<span class="wchip${SUB.get(w)==='these'&&cat==='conclusion'?' these':''}"${SUB.get(w)==='these'&&cat==='conclusion'?' title="prise de position : repérée mais non encadrée"':''}><input value="${esc(w)}" size="${Math.max(3,w.length)}" data-lexcat="${cat}" data-k="${k}" aria-label="mot de liaison"><button class="ghost" data-lexdel="${cat}" data-k="${k}" title="Supprimer">×</button></span>`).join('')}</div>
+  <div class="tools"><input class="lexnew" data-lexnew="${cat}" placeholder="nouveau mot ou expression…"><button data-lexadd="${cat}">Ajouter</button></div></div>`).join('');
+}
+function lexChanged(){setLexicon(LEXICON);saveLex();recompute();renderLex();}
+function workData(){const d={app:'atelier-argumentation',version:2,date:new Date().toISOString(),text:S.text,fine:S.fine,over:[...S.over],seg:S.seg,implicit:S.implicit};if(!lexIsDefault())d.lex=cloneLex(LEXICON);return d;}
+function workRestore(d){
+  if(!d||d.app!=='atelier-argumentation'||typeof d.text!=='string')throw new Error('format');
+  S.text=d.text;S.fine=d.fine!==false;S.over=new Map(migOver(d.over));
+  S.seg=d.seg?{joins:d.seg.joins||[],cuts:d.seg.cuts||[]}:{joins:[],cuts:[]};S.implicit=Array.isArray(d.implicit)?d.implicit:[];
+  $('src').value=S.text;$('fine').checked=S.fine;
+  if(d.lex&&typeof d.lex==='object'){setLexicon(normLex(d.lex));saveLex();renderLex();}
+  recompute();
+  return !!d.lex;
+}
+function initTools(){
+  let wt=null;const wmsg=t=>{const m=$('work-msg');m.textContent=t||'';clearTimeout(wt);if(t)wt=setTimeout(()=>{m.textContent='';},6000);};
+  $('work-save').onclick=()=>{download('argument-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(workData(),null,1),'application/json');wmsg('Travail enregistré.');};
+  $('work-open').onclick=()=>$('work-file').click();
+  /* comparaison : charge un travail SANS toucher au travail en cours */
+  let ct=null;const cmsg=t=>{const m=$('cmp-msg');m.textContent=t||'';clearTimeout(ct);if(t)ct=setTimeout(()=>{m.textContent='';},6000);};
+  $('cmp-open').onclick=()=>$('cmp-file').click();
+  $('cmp-file').addEventListener('change',e=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();
+    r.onload=()=>{try{loadCompare(JSON.parse(r.result),f.name);cmsg('');}catch(err){cmsg('Ce fichier n\'est pas un travail de l\'Atelier.');}e.target.value='';};
+    r.readAsText(f);
+  });
+  $('cmp-clear').onclick=()=>{CMP.data=CMP.units=null;CMP.name='';renderCompare();};
+  $('cmp-hint').addEventListener('change',renderCompare);
+  $('cmp-fit').addEventListener('change',()=>{['cmp-map-l','cmp-map-r'].forEach(id=>$(id).classList.toggle('fit',$('cmp-fit').checked));});
+  $('work-file').addEventListener('change',e=>{
+    const f=e.target.files[0];if(!f)return;
+    if(S.text.trim()&&!confirm('Ouvrir ce fichier remplacera le travail en cours. Continuer ?')){e.target.value='';return;}
+    const r=new FileReader();
+    r.onload=()=>{try{const withLex=workRestore(JSON.parse(r.result));wmsg('Travail ouvert : '+f.name+(withLex?' (avec ses mots de liaison modifiés)':''));}catch(err){wmsg('Ce fichier n\'est pas un travail de l\'Atelier.');}e.target.value='';};
+    r.readAsText(f);
+  });
+  $('modes').addEventListener('click',e=>{const b=e.target.closest('[data-mode]');if(!b)return;PREF.mode=b.dataset.mode;savePrefs();applyTheme();renderPalettes();});
+  $('palettes').addEventListener('click',e=>{const b=e.target.closest('[data-pal]');if(!b)return;PREF.palette=b.dataset.pal;savePrefs();applyTheme();renderPalettes();});
+  if(typeof window.matchMedia==='function'){const mq=window.matchMedia('(prefers-color-scheme: dark)');const f=()=>{if(PREF.mode==='auto'){applyTheme();renderPalettes();}};if(mq.addEventListener)mq.addEventListener('change',f);}
+  const lex=$('lex');
+  lex.addEventListener('change',e=>{
+    const t=e.target;if(!t.dataset||t.dataset.lexcat===undefined)return;
+    const cat=t.dataset.lexcat,k=+t.dataset.k,w=normWord(t.value);
+    if(!w){LEXICON[cat].splice(k,1);lexMsg('');lexChanged();return;}
+    const dup=lexFind(w,cat,k);
+    if(dup){lexMsg(`« ${w} » figure déjà dans la catégorie « ${LEX_INFO[dup][0]} ».`);t.value=LEXICON[cat][k];return;}
+    LEXICON[cat][k]=w;lexMsg('');lexChanged();
+  });
+  const add=cat=>{
+    const inp=document.querySelector(`[data-lexnew="${cat}"]`),w=normWord(inp.value);if(!w)return;
+    const dup=lexFind(w);if(dup){lexMsg(`« ${w} » figure déjà dans la catégorie « ${LEX_INFO[dup][0]} ».`);return;}
+    LEXICON[cat].push(w);lexMsg('');lexChanged();
+    const again=document.querySelector(`[data-lexnew="${cat}"]`);if(again)again.focus();
+  };
+  lex.addEventListener('click',e=>{
+    const d=e.target.closest('[data-lexdel]'),a=e.target.closest('[data-lexadd]');
+    if(d){LEXICON[d.dataset.lexdel].splice(+d.dataset.k,1);lexMsg('');lexChanged();}
+    else if(a)add(a.dataset.lexadd);
+  });
+  lex.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.dataset&&e.target.dataset.lexnew)add(e.target.dataset.lexnew);});
+  $('lex-reset').onclick=()=>{setLexicon(cloneLex(DEFAULT_LEX));try{localStorage.removeItem(LEX_KEY);}catch(e){}lexMsg('Mots de liaison réinitialisés.');recompute();renderLex();};
+}
+
+const API={structure,diffHints,unmatched:diffHints,analyseWork,loadCompare,renderCompare,reconcile,buildPrint,workData,workRestore,segment,analyse,sig,mapSVG,layout,toArgdown,toDot,findConnectors,setLexicon,DEFAULT_LEX,makeTheme,PALETTES,EX1,EX2,EX3};
+if(typeof document!=='undefined'&&document.getElementById&&document.getElementById('src')){
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+}
+if(typeof module!=='undefined'&&module.exports)module.exports=API;
+root.AtelierArg=API;
+})(typeof window!=='undefined'?window:globalThis);
+</script>
+</body>
+</html>
