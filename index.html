@@ -144,9 +144,10 @@ i.cut:hover::after{content:"✂";position:absolute;left:-.1em;top:-1.1em;font-si
 .wchip input{border:none;background:transparent;color:var(--ink);font:inherit;font-size:13px;outline:none;min-width:2ch}
 .lexnew{border:1px solid var(--line);border-radius:6px;padding:3px 6px;background:var(--input);color:var(--ink);font:inherit;font-size:13px;flex:1;min-width:0}
 footer{color:var(--muted);font-size:13px;margin-top:10px;text-align:center}
-.hbtns{margin-left:auto;display:flex;gap:6px;align-items:center}
+.hbtns{display:flex;gap:6px;align-items:center}
 .ibtn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:30px;padding:0;background:transparent;border:1px solid rgba(255,255,255,.4);color:var(--on-accent);border-radius:6px}
 .ibtn:hover{background:rgba(255,255,255,.16)}
+.ibtn.on{background:var(--on-accent);color:var(--accent);border-color:var(--on-accent)}
 .hmsg{font-size:12.5px;opacity:.95;max-width:42ch}
 
 /* comparaison et correction */
@@ -163,6 +164,13 @@ footer{color:var(--muted);font-size:13px;margin-top:10px;text-align:center}
 .cmp-pane h3{margin:0 0 6px;font-size:14px}
 .cmp-pane h3 small{font-weight:400;color:var(--muted)}
 .cmp-pane .mapbox{max-height:560px}
+
+/* mode d'emploi */
+.help{max-width:860px}
+.help .lead{font-size:15.5px;margin:0 0 6px}
+.help h3{margin:16px 0 4px;font-size:14.5px;color:var(--accent2)}
+.help ol,.help ul{margin:4px 0;padding-left:22px}
+.help li{margin:3px 0}
 
 /* feuille d'impression (export PDF) */
 #print-sheet{display:none}
@@ -192,13 +200,14 @@ footer{color:var(--muted);font-size:13px;margin-top:10px;text-align:center}
     <button class="tabbtn" data-tab="viz" aria-selected="false">Visualisation</button>
     <button class="tabbtn" data-tab="tools" aria-selected="false">Outils</button>
   </nav>
-  <span class="steps">Saisir le texte (section 1) → découper et structurer (sections 2 et 3) → visualiser (sections 4 et 5)</span>
   <span class="hbtns">
-    <span class="hmsg" id="work-msg" aria-live="polite"></span>
     <button class="ibtn" id="work-open" title="Ouvrir un travail enregistré (.json)" aria-label="Ouvrir un travail enregistré"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></button>
     <button class="ibtn" id="work-save" title="Enregistrer le travail dans un fichier (.json)" aria-label="Enregistrer le travail"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h11l4 4v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M8 3v5h7V3"/><path d="M8 21v-7h8v7"/></svg></button>
+    <button class="ibtn" id="help-btn" title="Mode d'emploi" aria-label="Mode d'emploi" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M9.2 9.2a2.9 2.9 0 0 1 5.6 1c0 1.9-2.8 2.4-2.8 4.1"/><circle cx="12" cy="17.6" r=".6" fill="currentColor"/></svg></button>
     <input type="file" id="work-file" accept=".json,application/json" hidden>
+    <span class="hmsg" id="work-msg" aria-live="polite"></span>
   </span>
+  <span class="steps">Saisir le texte (section 1) → découper et structurer (sections 2 et 3) → visualiser (sections 4 et 5)</span>
 </header>
 <main>
 
@@ -216,10 +225,10 @@ footer{color:var(--muted);font-size:13px;margin-top:10px;text-align:center}
   </section>
   <section>
     <h2>2. Découper les énoncés <small>couper, fusionner, ou ajouter une prémisse implicite</small></h2>
-    <p class="hint" style="margin:0 0 8px">Cliquez entre deux mots pour couper un énoncé en deux ; « fusionner » réunit un énoncé avec le suivant ; « ＋ prémisse implicite » ajoute un énoncé sous-entendu.</p>
+    <p class="hint" style="margin:0 0 8px">Cliquez entre deux mots pour couper un énoncé en deux ; « fusionner » réunit un énoncé avec le suivant ; « ＋ prémisse implicite » ajoute un énoncé sous-entendu. Il ne s'agit que d'un pré-découpage mécanique, fait aux mots de liaison : l'outil ne comprend pas le texte, c'est à vous de le corriger.</p>
     <div class="tools" style="margin:0 0 8px">
-      <label><input type="checkbox" id="fine" checked> découpage automatique aux mots de liaison (« car », « mais »…)</label>
-      <button id="seg-reset">Rétablir le découpage automatique</button>
+      <label><input type="checkbox" id="fine" checked> pré-découpage aux mots de liaison (« car », « mais »…)</label>
+      <button id="seg-reset">Rétablir le pré-découpage</button>
     </div>
     <div id="seg"></div>
   </section>
@@ -228,7 +237,7 @@ footer{color:var(--muted);font-size:13px;margin-top:10px;text-align:center}
 <div class="row r2">
   <section>
     <h2>3. Structurer l'argumentation <small>statut des énoncés, et liens logiques entre eux</small></h2>
-    <p class="hint" style="margin:0 0 8px">Une prémisse soutient un autre énoncé, une objection s'y oppose, une réponse répond à une objection. La conclusion ne renvoie à rien. Un énoncé « hors argument » n'a pas de lien logique : il n'apporte rien à l'argumentation, ou n'est pas encore classé. Les prémisses peuvent être liées entre elles. Le bouton ↺ revient au repérage automatique.</p>
+    <p class="hint" style="margin:0 0 8px">Une prémisse soutient un autre énoncé, une objection s'y oppose, une réponse répond à une objection. La conclusion ne renvoie à rien. Un énoncé « hors argument » n'a pas de lien logique : il n'apporte rien à l'argumentation, ou n'est pas encore classé. Les prémisses peuvent être liées entre elles. Le bouton ↺ revient à la proposition de départ.</p>
     <div id="cards"></div>
   </section>
   <section>
@@ -335,6 +344,38 @@ footer{color:var(--muted);font-size:13px;margin-top:10px;text-align:center}
           <div class="tools"><button data-copy="out-dot">Copier</button><button data-dl="out-dot" data-name="argument.dot">Télécharger .dot</button></div>
         </div>
       </div>
+    </section>
+  </div>
+</div>
+
+<div class="tab" id="tab-help" hidden>
+  <div class="row">
+    <section class="help">
+      <h2>À quoi sert cet outil?</h2>
+      <p class="lead">L'Atelier d'argumentation aide à <b>visualiser la structure</b> d'une argumentation. <b>Il ne détecte pas automatiquement cette structure.</b> Il la découpe mécaniquement aux mots de liaison (« car », « donc », « mais »…) et en tire une première proposition. C'est à vous de la reprendre et de la corriger en lisant le texte aussi précisément que possible. L'outil vous permet aussi de vous <b>entraîner à la rédaction d'arguments</b> en faisant des allers-retours entre l'écriture du texte et la détermination de sa structure logique. Si la structure n'est pas satisfaisante, vous pouvez réécrire le texte, et inversement.</p>
+      <h3>Comment s'en servir?</h3>
+      <ol>
+        <li><b>Le texte.</b> Écrivez ou collez un argument, ou chargez un exemple.</li>
+        <li><b>Le pré-découpage.</b> L'outil coupe le texte en énoncés aux mots de liaison. Ce n'est qu'un pré-découpage : coupez, fusionnez, ou ajoutez une prémisse implicite pour obtenir les bons énoncés.</li>
+        <li><b>La structure.</b> Pour chaque énoncé, l'outil propose un statut (conclusion, prémisse, objection, réponse) et un lien. Corrigez ce qui ne convient pas ; le bouton ↺ revient à la proposition de départ. C'est la plus grosse part du travail.</li>
+        <li><b>Le schéma.</b> Le texte coloré et le schéma en arbre (onglet Visualisation) montrent l'argument tel que vous l'avez structuré. Ils peuvent être exportés (PDF, PNG, SVG).</li>
+      </ol>
+      <h3>Quelques recommandations</h3>
+      <ul>
+        <li>Pour faire gagner du temps, l'outil propose un pré-découpage automatique. Mais il ne peut pas découvrir la structure logique tout seul. C'est à vous de donner un statut aux énoncés qui apparaissent <b>« hors argument »</b> ou dont le statut a été mal assigné.</li>
+        <li>N'oubliez pas de <b>lier entre elles les prémisses</b>. En général, un argument repose sur au moins deux prémisses liées qui permettent de tirer une conclusion partielle.</li>
+        <li>L'onglet des outils permet de définir soi-même les mots de liaison et d'indiquer quel statut ils donnent à l'énoncé qui les suit. L'ensemble peut ensuite être sauvegardé avec le texte et sa structure.</li>
+        <li>Lorsque vous construisez votre argumentation, vous n'aurez pas, en principe, à indiquer de prémisses implicites, par contre, en analysant les textes de grands auteurs, il y a souvent de l'implicite, que vous pouvez ajouter.</li>
+        <li>A destination des élèves : formaliser un argument est très difficile, mais cela oblige à analyser en profondeur un texte. Si vous n'arrivez pas à établir l'arbre, c'est que le texte n'est pas parfaitement compris.</li>
+        <li>A destination des professeurs : l'outil peut être très utile pour générer des images qui iront illustrer un cours. On peut rapidement écrire un argument simple et obtenir un petit arbre que l'on exporte en image.</li>
+      </ul>
+      <h3>Les boutons du haut</h3>
+      <ul>
+        <li><b>Page principale, Visualisation, Outils</b> : les trois pages de l'atelier. Les <b>Outils</b> permettent de modifier les mots de liaison, les couleurs et d'exporter la structure.</li>
+        <li><b>Dossier</b> : ouvre un travail enregistré. <b>Disquette</b> : enregistre le travail dans un fichier (.json). Les données restent dans votre navigateur ; rien n'est envoyé sur Internet.</li>
+        <li>Dans <b>Visualisation</b>, la section « Comparaison et correction » compare la structure de votre travail à un autre fichier enregistré, sans tenir compte du contenu des phrases.</li>
+      </ul>
+      <div class="tools"><button id="help-back">← Retour à l'atelier</button></div>
     </section>
   </div>
 </div>
@@ -962,7 +1003,7 @@ function renderCards(){
     <select data-act="status" data-i="${i}">${stOpts(u.status)}</select>
     ${linked?`<span class="lw">${LINK_WORD[u.status]}</span><select data-act="target" data-i="${i}" class="${u.target<0?'need':''}">${toOpts(u.target,i,u.status)}</select>`:''}
     ${u.status==='conclusion'?'<span class="lw">conclut : pas de lien</span>':''}${u.status==='enonce'?'<span class="lw">hors de l\'argumentation : pas de lien</span>':''}
-    ${u.manual?`<span class="tag">ajusté</span><button class="ghost" data-act="reset" data-i="${i}" title="Revenir au repérage automatique">↺</button>`:''}
+    ${u.manual?`<span class="tag">ajusté</span><button class="ghost" data-act="reset" data-i="${i}" title="Revenir à la proposition de départ">↺</button>`:''}
   </div>
   <div class="ctext">${u.implicit?'<em>(sous-entendu)</em> ':''}${esc(u.core.length>150?u.core.slice(0,149)+'…':u.core)}</div>
   ${groupRow(u,i)}
@@ -1128,9 +1169,12 @@ function buildPrint(){
   });
   sh.innerHTML=out;
 }
+let LAST_TAB='main';
 function showTab(name){
+  if(name!=='help')LAST_TAB=name;
   document.querySelectorAll('.tab').forEach(t=>{t.hidden=t.id!=='tab-'+name;});
   document.querySelectorAll('.tabbtn').forEach(b=>{const on=b.dataset.tab===name;b.classList.toggle('on',on);b.setAttribute('aria-selected',on?'true':'false');});
+  const hb=$('help-btn');if(hb){hb.classList.toggle('on',name==='help');hb.setAttribute('aria-pressed',name==='help'?'true':'false');}
 }
 
 function init(){
@@ -1295,6 +1339,8 @@ function initTools(){
   let wt=null;const wmsg=t=>{const m=$('work-msg');m.textContent=t||'';clearTimeout(wt);if(t)wt=setTimeout(()=>{m.textContent='';},6000);};
   $('work-save').onclick=()=>{download('argument-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(workData(),null,1),'application/json');wmsg('Travail enregistré.');};
   $('work-open').onclick=()=>$('work-file').click();
+  $('help-btn').onclick=()=>showTab(LAST_TAB!=='help'&&!$('tab-help').hidden?LAST_TAB:'help');
+  $('help-back').onclick=()=>showTab(LAST_TAB);
   /* comparaison : charge un travail SANS toucher au travail en cours */
   let ct=null;const cmsg=t=>{const m=$('cmp-msg');m.textContent=t||'';clearTimeout(ct);if(t)ct=setTimeout(()=>{m.textContent='';},6000);};
   $('cmp-open').onclick=()=>$('cmp-file').click();
